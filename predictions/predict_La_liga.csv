@@ -1,0 +1,51 @@
+Date,Season,Home_Team,Away_Team,Predicted_Outcome,Prob_A,Prob_D,Prob_H,Outcome_str
+2025-05-02 19:00:00,2024.00,Rayo Vallecano de Madrid,Getafe CF,H,0.33,0.19,0.48,H
+2025-05-03 12:00:00,2024.00,Deportivo Alavés,Club Atlético de Madrid,A,0.41,0.26,0.33,D
+2025-05-03 14:15:00,2024.00,Villarreal CF,CA Osasuna,H,0.35,0.21,0.44,H
+2025-05-03 16:30:00,2024.00,UD Las Palmas,Valencia CF,A,0.44,0.26,0.30,A
+2025-05-03 19:00:00,2024.00,Real Valladolid CF,FC Barcelona,A,0.39,0.28,0.33,A
+2025-05-04 12:00:00,2024.00,Real Madrid CF,RC Celta de Vigo,H,0.21,0.13,0.66,H
+2025-05-04 14:15:00,2024.00,Sevilla FC,CD Leganés,H,0.30,0.26,0.44,D
+2025-05-04 16:30:00,2024.00,RCD Espanyol de Barcelona,Real Betis Balompié,A,0.58,0.14,0.28,A
+2025-05-04 19:00:00,2024.00,Real Sociedad de Fútbol,Athletic Club,A,0.38,0.29,0.33,D
+2025-05-05 19:00:00,2024.00,Girona FC,RCD Mallorca,A,0.46,0.32,0.22,H
+2025-05-09 19:00:00,2024.00,UD Las Palmas,Rayo Vallecano de Madrid,H,0.07,0.28,0.65,A
+2025-05-10 12:00:00,2024.00,Valencia CF,Getafe CF,H,0.21,0.23,0.56,H
+2025-05-10 14:15:00,2024.00,RC Celta de Vigo,Sevilla FC,H,0.19,0.27,0.54,H
+2025-05-10 16:30:00,2024.00,RCD Mallorca,Real Valladolid CF,H,0.16,0.19,0.65,H
+2025-05-10 16:30:00,2024.00,Girona FC,Villarreal CF,A,0.37,0.36,0.27,A
+2025-05-10 19:00:00,2024.00,Club Atlético de Madrid,Real Sociedad de Fútbol,H,0.23,0.13,0.64,H
+2025-05-11 12:00:00,2024.00,CD Leganés,RCD Espanyol de Barcelona,A,0.51,0.10,0.39,H
+2025-05-11 14:15:00,2024.00,FC Barcelona,Real Madrid CF,H,0.13,0.16,0.71,H
+2025-05-11 16:30:00,2024.00,Athletic Club,Deportivo Alavés,H,0.19,0.25,0.56,H
+2025-05-11 19:00:00,2024.00,Real Betis Balompié,CA Osasuna,H,0.20,0.15,0.65,D
+2025-05-13 17:00:00,2024.00,Real Valladolid CF,Girona FC,A,0.41,0.27,0.32,
+2025-05-13 18:00:00,2024.00,Real Sociedad de Fútbol,RC Celta de Vigo,D,0.31,0.38,0.31,
+2025-05-13 19:30:00,2024.00,Sevilla FC,UD Las Palmas,A,0.41,0.31,0.28,
+2025-05-14 17:00:00,2024.00,Deportivo Alavés,Valencia CF,A,0.56,0.22,0.22,
+2025-05-14 17:00:00,2024.00,Villarreal CF,CD Leganés,H,0.14,0.17,0.69,
+2025-05-14 19:30:00,2024.00,Real Madrid CF,RCD Mallorca,H,0.09,0.16,0.75,
+2025-05-15 17:00:00,2024.00,CA Osasuna,Club Atlético de Madrid,A,0.45,0.28,0.27,
+2025-05-15 17:00:00,2024.00,Rayo Vallecano de Madrid,Real Betis Balompié,A,0.55,0.21,0.24,
+2025-05-15 19:30:00,2024.00,RCD Espanyol de Barcelona,FC Barcelona,A,0.57,0.25,0.18,
+2025-05-15 19:30:00,2024.00,Getafe CF,Athletic Club,D,0.22,0.55,0.23,
+2025-05-18 17:00:00,2024.00,RCD Mallorca,Getafe CF,H,0.14,0.28,0.58,
+2025-05-18 17:00:00,2024.00,Real Sociedad de Fútbol,Girona FC,A,0.46,0.30,0.24,
+2025-05-18 17:00:00,2024.00,RC Celta de Vigo,Rayo Vallecano de Madrid,D,0.28,0.38,0.34,
+2025-05-18 17:00:00,2024.00,FC Barcelona,Villarreal CF,H,0.26,0.34,0.40,
+2025-05-18 17:00:00,2024.00,Sevilla FC,Real Madrid CF,H,0.19,0.33,0.48,
+2025-05-18 17:00:00,2024.00,CA Osasuna,RCD Espanyol de Barcelona,H,0.21,0.18,0.61,
+2025-05-18 17:00:00,2024.00,UD Las Palmas,CD Leganés,H,0.19,0.18,0.63,
+2025-05-18 17:00:00,2024.00,Real Valladolid CF,Deportivo Alavés,H,0.17,0.40,0.43,
+2025-05-18 17:00:00,2024.00,Club Atlético de Madrid,Real Betis Balompié,D,0.17,0.43,0.40,
+2025-05-18 17:00:00,2024.00,Valencia CF,Athletic Club,A,0.42,0.34,0.24,
+2025-05-25 00:00:00,2024.00,Getafe CF,RC Celta de Vigo,D,0.28,0.36,0.36,
+2025-05-25 00:00:00,2024.00,Girona FC,Club Atlético de Madrid,H,0.21,0.30,0.49,
+2025-05-25 00:00:00,2024.00,Real Betis Balompié,Valencia CF,A,0.54,0.21,0.25,
+2025-05-25 00:00:00,2024.00,Rayo Vallecano de Madrid,RCD Mallorca,H,0.27,0.15,0.58,
+2025-05-25 00:00:00,2024.00,Real Madrid CF,Real Sociedad de Fútbol,A,0.41,0.22,0.37,
+2025-05-25 00:00:00,2024.00,RCD Espanyol de Barcelona,UD Las Palmas,D,0.26,0.37,0.37,
+2025-05-25 00:00:00,2024.00,Athletic Club,FC Barcelona,A,0.37,0.32,0.31,
+2025-05-25 00:00:00,2024.00,Villarreal CF,Sevilla FC,D,0.33,0.45,0.22,
+2025-05-25 00:00:00,2024.00,Deportivo Alavés,CA Osasuna,H,0.23,0.29,0.48,
+2025-05-25 00:00:00,2024.00,CD Leganés,Real Valladolid CF,H,0.17,0.31,0.52,

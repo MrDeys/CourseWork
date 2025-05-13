@@ -1,0 +1,28 @@
+Date,Season,Home_Team,Away_Team,Predicted_Outcome,Prob_A,Prob_D,Prob_H,Outcome_str
+2025-05-02 18:45:00,2024.00,OGC Nice,Stade de Reims,H,0.30,0.25,0.45,H
+2025-05-03 15:00:00,2024.00,RC Strasbourg Alsace,Paris Saint-Germain FC,A,0.58,0.17,0.25,H
+2025-05-03 17:00:00,2024.00,Toulouse FC,Stade Rennais FC 1901,A,0.47,0.20,0.33,H
+2025-05-03 19:05:00,2024.00,AS Saint-Étienne,AS Monaco FC,D,0.34,0.40,0.26,A
+2025-05-04 13:00:00,2024.00,FC Nantes,Angers SCO,H,0.28,0.19,0.53,A
+2025-05-04 15:15:00,2024.00,Stade Brestois 29,Montpellier HSC,H,0.17,0.12,0.71,H
+2025-05-04 15:15:00,2024.00,AJ Auxerre,Le Havre AC,H,0.21,0.38,0.41,A
+2025-05-04 15:15:00,2024.00,Olympique Lyonnais,Racing Club de Lens,H,0.29,0.24,0.47,A
+2025-05-04 18:45:00,2024.00,Lille OSC,Olympique de Marseille,H,0.19,0.35,0.46,D
+2025-05-10 19:00:00,2024.00,Stade de Reims,AS Saint-Étienne,H,0.29,0.25,0.46,A
+2025-05-10 19:00:00,2024.00,AJ Auxerre,FC Nantes,H,0.27,0.33,0.40,D
+2025-05-10 19:00:00,2024.00,Angers SCO,RC Strasbourg Alsace,H,0.25,0.24,0.51,H
+2025-05-10 19:00:00,2024.00,Le Havre AC,Olympique de Marseille,A,0.50,0.28,0.22,A
+2025-05-10 19:00:00,2024.00,Stade Rennais FC 1901,OGC Nice,A,0.37,0.34,0.29,H
+2025-05-10 19:00:00,2024.00,Montpellier HSC,Paris Saint-Germain FC,A,0.47,0.18,0.35,A
+2025-05-10 19:00:00,2024.00,Toulouse FC,Racing Club de Lens,A,0.62,0.21,0.17,D
+2025-05-10 19:00:00,2024.00,AS Monaco FC,Olympique Lyonnais,H,0.34,0.21,0.45,H
+2025-05-10 19:00:00,2024.00,Stade Brestois 29,Lille OSC,H,0.28,0.35,0.37,H
+2025-05-17 19:00:00,2024.00,OGC Nice,Stade Brestois 29,H,0.27,0.17,0.56,
+2025-05-17 19:00:00,2024.00,Olympique de Marseille,Stade Rennais FC 1901,H,0.13,0.14,0.73,
+2025-05-17 19:00:00,2024.00,Olympique Lyonnais,Angers SCO,H,0.26,0.30,0.44,
+2025-05-17 19:00:00,2024.00,AS Saint-Étienne,Toulouse FC,D,0.30,0.41,0.29,
+2025-05-17 19:00:00,2024.00,Lille OSC,Stade de Reims,H,0.26,0.27,0.47,
+2025-05-17 19:00:00,2024.00,RC Strasbourg Alsace,Le Havre AC,H,0.23,0.30,0.47,
+2025-05-17 19:00:00,2024.00,FC Nantes,Montpellier HSC,H,0.34,0.26,0.40,
+2025-05-17 19:00:00,2024.00,Racing Club de Lens,AS Monaco FC,A,0.55,0.17,0.28,
+2025-05-17 19:00:00,2024.00,Paris Saint-Germain FC,AJ Auxerre,H,0.18,0.23,0.59,
