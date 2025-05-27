@@ -1,8 +1,9 @@
+Курсовая работа по теме: "Исследование технологий создания сайтов для прогнозирования результатов футбольных матчей"
+
+Инструкция по запуску:
 Нужен файл .env с API сайтов:
 https://dashboard.api-football.com
 https://www.football-data.org
-
-pip freeze > requirements.txt #delete
 
 pip install -r requirements.txt
 
