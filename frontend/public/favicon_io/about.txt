@@ -1,6 +1,0 @@
-This favicon was generated using the following font:
-
-- Font Title: Gantari
-- Font Author: undefined
-- Font Source: https://fonts.gstatic.com/s/gantari/v1/jVyb7nvyB2HL8iZyJEc0qSzwj1Hs8RjoeTK0YZWh37nmpWc.ttf
-- Font License: undefined)

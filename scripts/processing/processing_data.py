@@ -68,12 +68,12 @@ def load_teams(filepath):
 
 def shorten_name(surname):
   if not surname or not isinstance(surname, str):
-    return "" # Возвращаем пустую строку для None или нестроковых типов
+    return ""
 
   s_name = surname.strip().split()
 
   if len(s_name) == 0:
-    return "" # Если имя состояло только из пробелов
+    return "" 
   elif len(s_name) == 1:
     return s_name[0]
   else:

@@ -2,8 +2,10 @@
 
 Инструкция по запуску:
 Нужен файл .env с API сайтов:
-https://dashboard.api-football.com
+https://www.api-football.com
 https://www.football-data.org
+HISTORY_API_KEY="API ключ с сайта api-football"
+CURRENT_API_KEY="API ключ с сайта football-data"
 
 pip install -r requirements.txt
 
