@@ -1,238 +1,87 @@
-import pandas as pd 
-import numpy as np 
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.ensemble import RandomForestClassifier
-import os
-import joblib
-from sklearn.exceptions import NotFittedError
-
-LEAGUES = [
-    'Premier_League',
-    'La_liga', 
-    'Serie_A',
-    'Bundesliga', 
-    'Ligue_1'
-]
-
-path_models = "models"
-path_predicts = "predictions"
-os.makedirs(f"{path_models}", exist_ok=True) 
-os.makedirs(f"{path_predicts}", exist_ok=True)
-
-def debug_data_pipeline(league_name, df_original, df_processed, model, X_train, y_train, X_predict):
-    """
-    Комплексная диагностика данных и модели перед предсказанием
-    """
-    print(f"\n{'='*60}")
-    print(f"🔍 ДИАГНОСТИКА ЛИГИ: {league_name}")
-    print(f"{'='*60}")
-    
-    # 1. Проверка исходных данных
-    print("1. Проверка исходных данных:")
-    if df_original is None or df_original.empty:
-        print("   ❌ df_original is None или пустой")
-        return False
-    print(f"   ✅ Размер df_original: {df_original.shape}")
-    
-    if df_processed is None or df_processed.empty:
-        print("   ❌ df_processed is None или пустой")
-        return False
-    print(f"   ✅ Размер df_processed: {df_processed.shape}")
-    
-    # 2. Проверка обучающих данных
-    print("\n2. Проверка обучающих данных:")
-    if X_train is None or len(X_train) == 0:
-        print("   ❌ X_train is None или пустой")
-        return False
-    print(f"   ✅ Размер X_train: {X_train.shape}")
-    
-    if y_train is None or len(y_train) == 0:
-        print("   ❌ y_train is None или пустой")
-        return False
-    print(f"   ✅ Размер y_train: {y_train.shape}")
-    
-    # Проверка баланса классов
-    if hasattr(y_train, 'value_counts'):
-        class_counts = y_train.value_counts()
-        print(f"   Баланс классов: {dict(class_counts)}")
-    
-    # 3. Проверка данных для предсказания
-    print("\n3. Проверка данных для предсказания:")
-    if X_predict is None:
-        print("   ❌ X_predict is None")
-        return False
-    
-    if len(X_predict) == 0:
-        print("   ⚠️ X_predict пустой (0 samples) - нет матчей для предсказания")
-        print("   Это может быть нормально, если нет матчей в указанном диапазоне дат")
-        return True  # Это не ошибка, просто нет данных для предсказания
-    
-    print(f"   ✅ Размер X_predict: {X_predict.shape}")
-    
-    # 4. Проверка модели (если уже создана)
-    if model is not None:
-        print("\n4. Проверка модели:")
-        try:
-            if hasattr(model, 'n_features_in_'):
-                print(f"   ✅ Модель ожидает {model.n_features_in_} признаков")
-                
-                # Проверка совпадения количества признаков
-                if X_predict.shape[1] != model.n_features_in_:
-                    print(f"   ❌ Несоответствие признаков!")
-                    print(f"      Модель ожидает: {model.n_features_in_}")
-                    print(f"      X_predict имеет: {X_predict.shape[1]}")
-                    return False
-            else:
-                print("   ⚠️ Модель не имеет атрибута n_features_in_")
-        except Exception as e:
-            print(f"   ❌ Ошибка проверки модели: {e}")
-            return False
-    
-    # 5. Проверка на NaN значения
-    print("\n5. Проверка на NaN значения:")
-    for name, data in [('X_train', X_train), ('X_predict', X_predict)]:
-        if data is not None and len(data) > 0:
-            if hasattr(data, 'isna'):
-                nan_count = data.isna().sum().sum()
-                if nan_count > 0:
-                    print(f"   ⚠️ {name}: найдено NaN значений: {nan_count}")
-                    nan_columns = data.columns[data.isna().any()].tolist()
-                    print(f"      Колонки с NaN: {nan_columns}")
-                else:
-                    print(f"   ✅ {name}: NaN значений не найдено")
-    
-    print(f"\n✅ Диагностика завершена для лиги {league_name}")
-    print(f"{'='*60}\n")
-    return True
-
-def process_league(league_name):
-    print(f"\nОбработка лиги: {league_name}")
-
-    try:
-        # Загрузка данных
-        df_original = pd.read_csv(f'leagues_processed/{league_name}.csv')
-        if df_original.empty:
-            print(f"❌ Файл {league_name}.csv пустой или не найден")
-            return
-        
-        df_original['Date'] = pd.to_datetime(df_original['Date'])
-        df_original['Outcome_str'] = df_original['Outcome']
-
-        df_copy = df_original.copy()
-
-        encoder_oc = LabelEncoder()
-        encoder_oc.fit(df_copy['Outcome'].dropna())
-        oc_classes = encoder_oc.classes_ 
-
-        oc_map = {i: cls_name for i, cls_name in enumerate(oc_classes)}
-
-        df_copy['Outcome_Encoded'] = df_copy['Outcome'].apply(lambda x: encoder_oc.transform([x])[0] if pd.notna(x) else np.nan)
-
-        cols_drop = [
-            'League_ID', 'Home_Goals', 'Away_Goals', 'Home_Goals_Time', 'Away_Goals_Time', 
-            'Outcome',
-            'Total_Goals', 'Exact_Score', 'Team_Home', 'Team_Away'
-        ]
-        df_processed = df_copy.drop(columns=cols_drop, errors='ignore')
-
-        special_cols = ['Home_Team', 'Away_Team', 'RefereeName']
-
-        encoders_cols = {}
-        for col in special_cols:
-            if col in df_processed.columns:
-                le = LabelEncoder()
-                df_processed[col] = le.fit_transform(df_processed[col].astype(str))
-                encoders_cols[col] = le
-
-        cols = [col for col in df_processed.columns if col not in ['Date', 'Outcome_str', 'Outcome_Encoded']]
-
-        df_processed = df_processed.sort_values(by='Date').reset_index(drop=True)
-        df_orig_future = df_original.sort_values(by='Date').reset_index(drop=True)
-
-        train_mask = (df_processed['Date'] <= pd.to_datetime('2024-05-30')) & (df_processed['Outcome_Encoded'].notna())
-        mask_predict_processed = (df_processed['Date'] >= pd.to_datetime('2025-05-01')) & (df_processed['Date'] <= pd.to_datetime('2025-05-31'))
-        mask_predict_orig = (df_orig_future['Date'] >= pd.to_datetime('2025-05-01')) & (df_orig_future['Date'] <= pd.to_datetime('2025-05-31'))
-
-        train_df = df_processed[train_mask].copy()
-        if train_df.empty:
-            print(f"❌ Нет данных для обучения в лиге {league_name}")
-            return
-
-        df_predict_processed = df_processed[mask_predict_processed].copy()
-
-        X_train = train_df[cols].copy()
-        y_train = train_df['Outcome_Encoded'].astype(int)
-
-        X_cols = X_train.copy()
-        
-        X_predict = df_predict_processed[cols].copy() if not df_predict_processed.empty else pd.DataFrame(columns=cols)
-
-        # Диагностика перед обучением модели
-        if not debug_data_pipeline(league_name, df_original, df_processed, None, X_train, y_train, X_predict):
-            print(f"❌ Прерывание обработки лиги {league_name} из-за ошибок в данных")
-            return
-
-        scaler = StandardScaler()
-        scaler.fit(X_cols)
-
-        model = RandomForestClassifier(n_estimators=100, random_state=5, n_jobs=-1)
-        model.fit(X_train, y_train)
-
-        # Диагностика после обучения модели
-        if not debug_data_pipeline(league_name, df_original, df_processed, model, X_train, y_train, X_predict):
-            print(f"❌ Прерывание обработки лиги {league_name} из-за ошибок в данных")
-            return
-
-        path_model = f'{path_models}/model_{league_name}.joblib'
-        joblib.dump(model, path_model)
-        path_encoders_cols = f'{path_models}/encoder_cols_{league_name}.joblib' 
-        joblib.dump(encoders_cols, path_encoders_cols)
-        path_encoders_oc = f'{path_models}/encoder_oc_{league_name}.joblib'
-        joblib.dump(encoder_oc, path_encoders_oc)
-        path_scaler = f'{path_models}/scaler_{league_name}.joblib'
-        joblib.dump(scaler, path_scaler)
-
-        X_predict_model = X_predict.copy()
-
-        # Инициализируем proba_cols здесь, чтобы переменная была определена в любом случае
-        proba_cols = [f'Prob_{cls}' for cls in oc_classes]
-        
-        # Проверка перед предсказанием
-        if len(X_predict_model) == 0:
-            print(f"⚠️ Нет матчей для предсказания в лиге {league_name} (период май 2025)")
-            # Создаем пустой результат с правильными колонками
-            predicts_df = pd.DataFrame(columns=['Date', 'Season', 'Home_Team', 'Away_Team', 'Predicted_Outcome', 'Outcome_str'] + proba_cols)
-        else:
-            encoded_predicts = model.predict(X_predict_model)
-            proba_predict = model.predict_proba(X_predict_model)
-
-            predicts_str = [oc_map.get(p, 'Unknown') for p in encoded_predicts.astype(int)]
-
-            predicts_df = df_original[mask_predict_orig].copy()
-
-            predicts_df['Predicted_Outcome'] = predicts_str
-            predicts_df[proba_cols] = proba_predict
-
-        res_cols = ['Date', 'Season', 'Home_Team', 'Away_Team', 'Predicted_Outcome'] + proba_cols + ['Outcome_str']
-        res_cols = [col for col in res_cols if col in predicts_df.columns]
-        predicts_df = predicts_df[res_cols]
-        path_predicts_df = f"{path_predicts}/predict_{league_name}.csv" 
-        predicts_df.to_csv(path_predicts_df, index=False, float_format='%.2f')
-        print(f"✅ Лига: {league_name} обработана успешно")
-        
-    except FileNotFoundError:
-        print(f"❌ Файл leagues_processed/{league_name}.csv не найден")
-    except Exception as e:
-        print(f"❌ Критическая ошибка в лиге {league_name}:")
-        print(f"   Ошибка: {str(e)}")
-        print(f"   Тип ошибки: {type(e).__name__}")
-        import traceback
-        traceback.print_exc()
-
-print("🚀 Запуск machine learning pipeline с диагностикой")
-print("ℹ️ Будут выведены подробные отладочные сообщения\n")
-
-for league in LEAGUES:
-    process_league(league)
-
-print("\n✅ Выполнены прогнозы для всех лиг")
+attrs==26.1.0
+beautifulsoup4==4.14.3
+behave==1.2.6
+certifi==2026.2.25
+cffi==2.0.0
+charset-normalizer==3.4.7
+colorama==0.4.6
+cssselect==1.4.0
+exceptiongroup==1.3.1
+execnet==2.1.2
+fasteners==0.20
+filelock==3.28.0
+fsspec==2026.3.0
+greenlet==3.4.0
+h11==0.16.0
+html5lib==1.1
+idna==3.11
+iniconfig==2.3.0
+Jinja2==3.1.6
+joblib==1.5.3
+lxml==6.1.0
+markdown-it-py==4.0.0
+MarkupSafe==3.0.3
+mdurl==0.1.2
+mpmath==1.3.0
+mycdp==1.3.7
+networkx==3.6.1
+numpy==2.4.4
+orjson==3.11.8
+outcome==1.3.0.post0
+packaging==26.1
+pandas==3.0.2
+parameterized==0.9.0
+parse==1.21.1
+parse_type==0.6.6
+pdbp==1.8.2
+pillow==12.2.0
+platformdirs==4.9.6
+pluggy==1.6.0
+psycopg2-binary==2.9.11
+pycparser==3.0
+Pygments==2.20.0
+pynose==1.5.5
+pyotp==2.9.0
+pyreadline3==3.5.4
+PySocks==1.7.1
+pytest==9.0.3
+pytest-html==4.0.2
+pytest-metadata==3.1.1
+pytest-ordering==0.6
+pytest-rerunfailures==16.1
+pytest-xdist==3.8.0
+python-dateutil==2.9.0.post0
+python-dotenv==1.2.2
+PyYAML==6.0.3
+requests==2.33.1
+rich==15.0.0
+sbvirtualdisplay==1.4.0
+scikit-learn==1.8.0
+scipy==1.17.1
+selenium==4.43.0
+seleniumbase==4.48.2
+setuptools==81.0.0
+six==1.17.0
+sniffio==1.3.1
+soccerdata==1.9.0
+sortedcontainers==2.4.0
+soupsieve==2.8.3
+SQLAlchemy==2.0.49
+sympy==1.14.0
+tabcompleter==1.4.0
+threadpoolctl==3.6.0
+torch==2.11.0
+torchvision==0.26.0
+tqdm==4.67.3
+trio==0.33.0
+trio-websocket==0.12.2
+typing_extensions==4.15.0
+tzdata==2026.1
+Unidecode==1.4.0
+urllib3==2.6.3
+webencodings==0.5.1
+websocket-client==1.9.0
+websockets==16.0
+wheel==0.46.3
+wrapper-tls-requests==1.2.5
+wsproto==1.3.2

@@ -14,7 +14,3 @@ pip install -r requirements.txt
 
 ..\CourseWork\frontend>install start # если первый раз
 ..\CourseWork\frontend>npm start
-
-Запуск с нуля:
-..\CourseWork> python backend/src/database/tables.py
-..\CourseWork> python backend/src/scripts/loading_soccerdata.py
