@@ -50,8 +50,8 @@ function HomePage() {
       );
     }
 
-    // const now = new Date(); // Реальное время.
-    const now = new Date("2025-05-01T00:00:00Z"); // Тестовая дата для отладки.
+    //const now = new Date(); // Реальное время.
+    const now = new Date("2025-08-01T00:00:00Z"); // Тестовая дата для отладки.
     const todayStart = new Date(
       now.getFullYear(),
       now.getMonth(),

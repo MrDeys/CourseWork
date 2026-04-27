@@ -192,7 +192,7 @@ function MatchDetailPage() {
               </div>
               <p className="text-center text-lg font-bold mt-10">
                 <span className="text-color-text-white">
-                  Пронзон от нейросети:{" "}
+                  Прогноз от нейросети:{" "}
                 </span>
                 <span className={predict?.colorClass}>{predict?.text}</span>
               </p>

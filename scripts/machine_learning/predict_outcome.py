@@ -56,9 +56,9 @@ def process_league(league_name):
     df_processed = df_processed.sort_values(by='Date').reset_index(drop=True)
     df_orig_future = df_original.sort_values(by='Date').reset_index(drop=True)
 
-    train_mask = (df_processed['Date'] <= pd.to_datetime('2024-05-30')) & (df_processed['Outcome_Encoded'].notna())
-    mask_predict_processed = (df_processed['Date'] >= pd.to_datetime('2025-05-01')) & (df_processed['Date'] <= pd.to_datetime('2025-05-31'))
-    mask_predict_orig = (df_orig_future['Date'] >= pd.to_datetime('2025-05-01')) & (df_orig_future['Date'] <= pd.to_datetime('2025-05-31'))
+    train_mask = (df_processed['Date'] <= pd.to_datetime('2025-07-31')) & (df_processed['Outcome_Encoded'].notna()) # время обучения
+    mask_predict_processed = (df_processed['Date'] >= pd.to_datetime('2025-08-01')) & (df_processed['Date'] <= pd.to_datetime('2025-10-31')) # время предсказания
+    mask_predict_orig = (df_orig_future['Date'] >= pd.to_datetime('2025-08-01')) & (df_orig_future['Date'] <= pd.to_datetime('2025-10-31')) # время предсказания
 
     train_df = df_processed[train_mask].copy()
 
