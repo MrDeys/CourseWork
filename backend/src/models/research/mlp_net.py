@@ -1,0 +1,145 @@
+import pandas as pd
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.utils.data import DataLoader
+from sklearn.metrics import f1_score
+import os
+import joblib
+import itertools
+import matplotlib.pyplot as plt
+from data_utils import get_prepared_data, MODELS_SAVED_DIR, save_config
+import json
+
+class MultiTaskFootballNet(nn.Module):
+    def __init__(self, input_size, hidden_size=64, dropout_rate=0.3):
+        super(MultiTaskFootballNet, self).__init__()
+        self.shared_layers = nn.Sequential(
+            nn.Linear(input_size, hidden_size),
+            nn.BatchNorm1d(hidden_size),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+            nn.Linear(hidden_size, hidden_size // 2),
+            nn.BatchNorm1d(hidden_size // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate / 2)
+        )
+        self.head_outcome = nn.Linear(hidden_size // 2, 3)
+        self.head_total = nn.Linear(hidden_size // 2, 1)
+        self.head_home_goals = nn.Sequential(nn.Linear(hidden_size // 2, 1), nn.ReLU())
+        self.head_away_goals = nn.Sequential(nn.Linear(hidden_size // 2, 1), nn.ReLU())
+
+    def forward(self, x):
+        shared_features = self.shared_layers(x)
+        return self.head_outcome(shared_features), self.head_total(shared_features), \
+               self.head_home_goals(shared_features), self.head_away_goals(shared_features)
+
+
+class FootballDataset(torch.utils.data.Dataset):
+    def __init__(self, X, y_outcome, y_total, y_home_goals, y_away_goals):
+        self.X = torch.tensor(X, dtype=torch.float32)
+        self.y_outcome = torch.tensor(y_outcome, dtype=torch.long)
+        self.y_total = torch.tensor(y_total, dtype=torch.float32)
+        self.y_home_goals = torch.tensor(y_home_goals, dtype=torch.float32)
+        self.y_away_goals = torch.tensor(y_away_goals, dtype=torch.float32)
+    def __len__(self): return len(self.X)
+    def __getitem__(self, idx): return self.X[idx], self.y_outcome[idx], self.y_total[idx], self.y_home_goals[idx], self.y_away_goals[idx]
+
+def train_and_evaluate(params, d):
+    train_dataset = FootballDataset(d['X_train'], d['y_out_train'], d['y_tot_train'], d['y_hg_train'], d['y_ag_train'])
+    test_dataset = FootballDataset(d['X_test'], d['y_out_test'], d['y_tot_test'], d['y_hg_test'], d['y_ag_test'])
+    
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True, drop_last=True)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+
+    model = MultiTaskFootballNet(input_size=d['X_train'].shape[1], hidden_size=params['hidden_size'], dropout_rate=params['dropout'])
+    optimizer = optim.Adam(model.parameters(), lr=params['lr'])
+    
+    #class_weights = torch.tensor([1.1, 2.0, 1.0], dtype=torch.float32)
+    #class_weights = torch.tensor([1.1, 1.5, 1.0], dtype=torch.float32)
+    class_weights = torch.tensor([1.0 , 1.5, 1.0], dtype=torch.float32)
+    loss_outcome = nn.CrossEntropyLoss(weight=class_weights)
+    loss_total = nn.BCEWithLogitsLoss()
+    loss_goals = nn.MSELoss()
+
+    best_f1 = 0
+    for epoch in range(30): 
+        model.train()
+        for batch_x, b_out, b_tot, b_hg, b_ag in train_loader:
+            optimizer.zero_grad()
+            p_out, p_tot, p_hg, p_ag = model(batch_x)
+            #l = (loss_outcome(p_out, b_out) * 1.5) + (loss_total(p_tot.squeeze(), b_tot) * 0.5) + (loss_goals(p_hg.squeeze(), b_hg) * 0.25)
+            #l = (loss_outcome(p_out, b_out) * 1.0) + (loss_total(p_tot.squeeze(), b_tot) * 0.5) + (loss_goals(p_hg.squeeze(), b_hg) * 1.0)
+            l = (loss_outcome(p_out, b_out) * 1.0) + (loss_total(p_tot.squeeze(), b_tot) * 1.0) + (loss_goals(p_hg.squeeze(), b_hg) * 1.0) + (loss_goals(p_ag.squeeze(), b_ag) * 1.0)
+            l.backward()
+            optimizer.step()
+        
+        model.eval()
+        all_preds = []
+        all_true = []
+        with torch.no_grad():
+            for batch_x, b_out, b_tot, b_hg, b_ag in test_loader:
+                p_out, _, _, _ = model(batch_x)
+                _, predicted = torch.max(p_out, 1)
+                all_preds.extend(predicted.numpy())
+                all_true.extend(b_out.numpy())
+        
+        f1 = f1_score(all_true, all_preds, average='macro')
+        if f1 > best_f1:
+            best_f1 = f1
+            torch.save(model.state_dict(), os.path.join(MODELS_SAVED_DIR, 'temp_mlp.pth'))
+
+    return best_f1
+
+def run_tuning():
+    print("Загрузка данных...")
+    d = get_prepared_data()
+
+    param_grid = {
+        #'lr': [0.001,  0.0005],
+        'lr': [0.001],
+        'hidden_size': [64, 128],
+        #'dropout': [0.3, 0.5]
+        'dropout': [0.5]
+    }
+
+    keys, values = zip(*param_grid.items())
+    combinations = [dict(zip(keys, v)) for v in itertools.product(*values)]
+    
+    results = []
+    print(f"Начинаем перебор {len(combinations)} комбинаций...")
+
+    for i, params in enumerate(combinations):
+        print(f"Тест {i+1}/{len(combinations)}: {params}")
+        f1 = train_and_evaluate(params, d)
+        params['f1_macro'] = f1
+        results.append(params)
+        print(f"  -> F1 Score: {f1:.4f}")
+
+    results_df = pd.DataFrame(results).sort_values(by='f1_macro', ascending=False)
+    
+    BASE_SAVE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../models/saved'))
+    os.makedirs(BASE_SAVE_DIR, exist_ok=True)
+
+    results_df = pd.DataFrame(results).sort_values(by='f1_macro', ascending=False)
+    tuning_path = os.path.join(BASE_SAVE_DIR, 'tuning_mlp_results.csv')
+    results_df.to_csv(tuning_path, index=False)
+    
+    best_params = results_df.iloc[0].to_dict()
+    print(f"\nЛУЧШИЕ ПАРАМЕТРЫ: {best_params}")
+
+    save_config(best_params, d, 'mlp') 
+
+    final_model_path = os.path.join(BASE_SAVE_DIR, 'best_mlp_model.pth')
+    temp_path = os.path.join(BASE_SAVE_DIR, 'temp_mlp.pth')
+
+    if os.path.exists(temp_path):
+        if os.path.exists(final_model_path): 
+            os.remove(final_model_path)
+        os.rename(temp_path, final_model_path)
+        print(f"Финальная модель MLP сохранена")
+    
+
+if __name__ == "__main__":
+    run_tuning()

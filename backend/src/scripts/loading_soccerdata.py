@@ -14,7 +14,7 @@ LEAGUES_MAPPING = {
     'FRA-Ligue 1': 'Ligue_1'
 }
 
-SEASONS = ['2021', '2122', '2223', '2324', '2425', '2526']
+SEASONS = ['1415','1516', '1617', '1718', '1819', '1920', '2021', '2122', '2223', '2324', '2425', '2526']
 
 def get_or_create_league(session, league_name):
     league = session.query(League).filter(League.name == league_name).first()

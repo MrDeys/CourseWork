@@ -65,7 +65,6 @@ def calculate_team_features(df: pd.DataFrame, window=5) -> pd.DataFrame:
     for col in features:
         teams_history[f'avg_{col}_last_{window}'] = grouped[col].transform(lambda x: x.rolling(window, min_periods=1).mean().shift(1))
 
-    # 3. Разница xG
     teams_history[f'xg_diff_last_{window}'] = teams_history[f'avg_xg_for_last_{window}'] - teams_history[f'avg_xg_against_last_{window}']
 
     return teams_history
@@ -115,7 +114,7 @@ def build_ml_dataset():
     columns_to_drop = ['home_goals', 'away_goals', 'home_xg', 'away_xg', 'home_ppda', 'away_ppda', 'home_deep', 'away_deep']
     df = df.drop(columns=columns_to_drop)
 
-    save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../processed/ml_dataset.csv'))
+    save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../dataset/ml_dataset.csv'))
     
     df.to_csv(save_path, index=False)
     
