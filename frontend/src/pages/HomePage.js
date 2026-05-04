@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import MatchList from "../components/MatchList";
 import { getMatches } from "../api";
 import LeagueSidebar from "../components/Layout/LeagueSidebar";
@@ -10,13 +10,14 @@ import saLogo from "../assets/leagues/serie-a.png";
 import pdLogo from "../assets/leagues/la-liga.png";
 import flLogo from "../assets/leagues/ligue-1.png";
 
+// ИСПРАВЛЕНО: Коды (code) теперь должны СТРОГО совпадать с именами в БД (Premier_League и т.д.)
 const SidebarLeagues = [
   { code: null, name: "ВСЕ", shortName: "Все", logo: null },
-  { code: "PL", name: "Premier League", logo: plLogo },
-  { code: "PD", name: "La liga", logo: pdLogo },
-  { code: "SA", name: "Serie A", logo: saLogo },
-  { code: "BL1", name: "Bundesliga", logo: blLogo },
-  { code: "FL1", name: "Ligue 1", logo: flLogo },
+  { code: "Premier_League", name: "Premier League", logo: plLogo },
+  { code: "La_Liga", name: "La liga", logo: pdLogo },
+  { code: "Serie_A", name: "Serie A", logo: saLogo },
+  { code: "Bundesliga", name: "Bundesliga", logo: blLogo },
+  { code: "Ligue_1", name: "Ligue 1", logo: flLogo },
 ];
 
 function HomePage() {
@@ -35,6 +36,7 @@ function HomePage() {
     const fetchAllMatches = async () => {
       setLoading(true);
       const data = await getMatches(null);
+      console.log("Полученные данные из API:", data); // Проверка в консоли F12
       setAllMatches(data);
       setLoading(false);
     };
@@ -44,29 +46,19 @@ function HomePage() {
   useEffect(() => {
     let filterMatches = allMatches;
 
+    // ИСПРАВЛЕНО: поле теперь называется league, а не competition_code
     if (LeagueCode) {
       filterMatches = filterMatches.filter(
-        (match) => match.competition_code === LeagueCode
+        (match) => match.league === LeagueCode,
       );
     }
 
-    //const now = new Date(); // Реальное время.
-    const now = new Date("2025-08-01T00:00:00Z"); // Тестовая дата для отладки.
-    const todayStart = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate()
-    );
-    const fourWeek = new Date(now.getTime() + 28 * 24 * 60 * 60 * 1000);
-    fourWeek.setHours(23, 59, 59);
-
-    const Filter = filterMatches.filter((match) => {
-      const matchDate = new Date(match.utcDate);
-      return matchDate >= todayStart && matchDate <= fourWeek;
-    });
+    // ИСПРАВЛЕНО: Для отладки пока отключим жесткий фильтр по датам,
+    // чтобы увидеть, приходят ли данные вообще.
+    // Если всё заработает - вернешь фильтр на нужный диапазон.
+    const Filter = [...filterMatches];
 
     Filter.sort((a, b) => new Date(a.utcDate) - new Date(b.utcDate));
-
     setDisplayMatches(Filter);
   }, [allMatches, LeagueCode, loading]);
 
@@ -78,22 +70,11 @@ function HomePage() {
     ? SidebarLeagues.find((l) => l.code === LeagueCode)
     : { name: "Все матчи" };
 
-  const pageTitle = currentLeagueTitle.name;
-
-  const sidebarTop = "top-16";
-  const sidebarMaxHeight = "max-h-[calc(100vh_-_4rem_-_theme(spacing.8))]";
+  const pageTitle = currentLeagueTitle ? currentLeagueTitle.name : "Все матчи";
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-      <aside
-        className={`
-          w-full lg:w-60 xl:w-64 flex-shrink-0
-          mb-6 lg:mb-0
-          lg:sticky ${sidebarTop} self-start
-          ${sidebarMaxHeight} overflow-y-auto
-          rounded-lg
-        `}
-      >
+      <aside className="w-full lg:w-60 xl:w-64 flex-shrink-0">
         <LeagueSidebar
           leagues={SidebarLeagues}
           selectedLeague={LeagueCode}
@@ -102,13 +83,17 @@ function HomePage() {
       </aside>
 
       <section className="w-full lg:flex-grow min-w-0">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-color-primary-yellow uppercase tracking-wider">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-center text-yellow-500 uppercase tracking-wider">
           {pageTitle}
         </h1>
-        {loading && displayMatches.length === 0 ? (
+        {loading ? (
           <div className="flex justify-center items-center h-64">
-            <p className="text-xl text-color-text-second animate-pulse">
-              Загрузка матчей...
+            <p className="text-xl animate-pulse">Загрузка матчей...</p>
+          </div>
+        ) : displayMatches.length === 0 ? (
+          <div className="text-center p-10 bg-gray-800 rounded-lg">
+            <p className="text-gray-400">
+              Матчи не найдены в базе данных или не сгенерированы прогнозы.
             </p>
           </div>
         ) : (
@@ -119,19 +104,6 @@ function HomePage() {
           />
         )}
       </section>
-
-      <aside
-        className={`w-full lg:w-72 xl:w-80 flex-shrink-0 hidden md:block lg:sticky ${sidebarTop} self-start ${sidebarMaxHeight} overflow-y-auto rounded-lg`}
-      >
-        <div className="bg-color-surface p-4 rounded-lg shadow-md min-h-[300px] flex flex-col">
-          <h3 className="text-xl font-semibold mb-3 text-color-primary-yellow">
-            Турнирная таблица
-          </h3>
-          <p className="text-color-text-second flex-grow flex items-center justify-center text-center">
-            Функция в разработке.
-          </p>
-        </div>
-      </aside>
     </div>
   );
 }

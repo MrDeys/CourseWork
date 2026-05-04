@@ -1,7 +1,7 @@
 # backend/src/services/match_service.py
 from sqlalchemy.orm import joinedload
 # Убедись, что путь импорта правильный относительно твоего проекта
-from database.tables import SessionLocal, Match, League
+from src.database.tables import SessionLocal, Match, League
 
 class MatchService:
     def _format_match(self, match):
@@ -14,8 +14,8 @@ class MatchService:
             "id": match.id,
             "utcDate": match.date.isoformat() + "Z", # Формат времени, понятный JS
             "league": match.league.name if match.league else None,
-            "homeTeam": {"name": match.home_team.name},
-            "awayTeam": {"name": match.away_team.name},
+            "homeTeam": {"name": match.home_team.name, "logo_url": match.home_team.logo_url},
+            "awayTeam": {"name": match.away_team.name, "logo_url": match.away_team.logo_url},
             "status": match.status,
             "score": {
                 "homeTeam": match.home_goals,
