@@ -1,97 +1,73 @@
-import os, sys
+import os, sys, time
 import requests
-import time
+from bs4 import BeautifulSoup
+import urllib.parse
 
-# Подключаем БД
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from database.tables import SessionLocal, Team
 
-# Заголовки, чтобы сайты не блокировали "бота"
 HEADERS = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+    'User-Agent': 'FootballDataThesisProject/1.0 (your@email.com)'
 }
 
-def get_logo_v1_wikipedia(team_name):
-    """Стратегия 1: Поиск через API Википедии (самый надежный способ)"""
+def get_wikipedia_logo(team_name):
     try:
-        # Улучшаем поисковый запрос
-        search_query = team_name if "FC" in team_name else f"{team_name} F.C."
-        search_url = "https://en.wikipedia.org/w/api.php"
+        search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(team_name + ' football club')}&utf8=&format=json"
+        search_res = requests.get(search_url, headers=HEADERS).json()
         
-        # 1. Ищем страницу
-        params = {
-            "action": "query", "format": "json", "list": "search",
-            "srsearch": search_query, "srlimit": 1
-        }
-        res = requests.get(search_url, params=params, headers=HEADERS, timeout=5).json()
+        if not search_res['query']['search']:
+            return None
+            
+        page_title = search_res['query']['search'][0]['title']
         
-        if res['query']['search']:
-            title = res['query']['search'][0]['title']
-            # 2. Получаем логотип с этой страницы
-            img_params = {
-                "action": "query", "format": "json", "titles": title,
-                "prop": "pageimages", "pithumbsize": 300
-            }
-            img_res = requests.get(search_url, params=img_params, headers=HEADERS, timeout=5).json()
-            pages = img_res['query']['pages']
-            for p in pages:
-                if 'thumbnail' in pages[p]:
-                    return pages[p]['thumbnail']['source']
-    except: pass
-    return None
-
-def get_logo_v2_simple(team_name):
-    """Стратегия 2: Использование прямого агрегатора (на случай если Википедия молчит)"""
-    # Превращаем "Manchester United" в "manchester-united" вручную
-    clean_name = team_name.lower().replace(' ', '-')
-    # Пытаемся постучаться в открытый репозиторий на GitHub
-    url = f"https://raw.githubusercontent.com/luukid/football-logos/master/logos/{team_name.replace(' ', '%20')}.png"
-    try:
-        r = requests.head(url, headers=HEADERS, timeout=3)
-        if r.status_code == 200:
-            return url
-    except: pass
+        page_url = f"https://en.wikipedia.org/wiki/{urllib.parse.quote(page_title)}"
+        html_res = requests.get(page_url, headers=HEADERS)
+        soup = BeautifulSoup(html_res.text, 'html.parser')
+        
+        infobox = soup.find('table', {'class': 'infobox'})
+        if infobox:
+            img_tag = infobox.find('img')
+            if img_tag and 'src' in img_tag.attrs:
+                img_url = img_tag['src']
+                if img_url.startswith('//'):
+                    img_url = 'https:' + img_url
+                
+                if '/thumb/' in img_url:
+                    img_url = img_url.replace('/thumb/', '/')
+                    img_url = img_url.rsplit('/', 1)[0]
+                
+                return img_url
+    except Exception:
+        pass
+    
     return None
 
 def update_team_logos():
     session = SessionLocal()
+    
     teams = session.query(Team).all()
     
-    print(f"Запуск обновления логотипов для {len(teams)} команд...")
+    print(f"Запуск ПРИНУДИТЕЛЬНОГО скачивания логотипов для {len(teams)} команд...")
     
     found = 0
     for team in teams:
-        print(f"Поиск: {team.name}...", end=" ", flush=True)
+        print(f"Ищем: {team.name:30}", end="", flush=True)
         
-        # Сначала пробуем Википедию
-        url = get_logo_v1_wikipedia(team.name)
+        url = get_wikipedia_logo(team.name)
         
-        # Если не нашли — пробуем составить прямую ссылку
-        if not url:
-            url = get_logo_v2_simple(team.name)
-            
-        # Если совсем ничего — ставим заглушку Clearbit
-        if not url:
-            domain_name = team.name.lower().replace(' ', '')
-            url = f"https://logo.clearbit.com/{domain_name}.com"
-
         if url:
             team.logo_url = url
-            print(f"Найдено!")
             found += 1
+            print(f"[НАЙДЕНО] {url[:50]}...")
         else:
-            print(f"Пропуск")
+            team.logo_url = None 
+            print("[НЕ НАЙДЕНО]")
             
-        time.sleep(0.4) # Задержка для стабильности
+        time.sleep(1)
 
-    try:
-        session.commit()
-        print(f"\n[УСПЕХ]: Обновлено {found} логотипов.")
-    except Exception as e:
-        session.rollback()
-        print(f"\n[ОШИБКА]: {e}")
-    finally:
-        session.close()
+    session.commit()
+    session.close()
+    print(f"Обновление завершено. Успешно обновлено {found} из {len(teams)}.")
 
 if __name__ == "__main__":
     update_team_logos()

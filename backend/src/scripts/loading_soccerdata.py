@@ -119,7 +119,7 @@ def load_data():
 
     session.commit()
     session.close()
-    print(f"Готово! Теперь в базе {matches_processed} матчей (и прошлое, и будущее).")
+    print(f"Готово! Теперь в базе {matches_processed} матчей")
 
 if __name__ == "__main__":
     load_data()

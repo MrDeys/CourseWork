@@ -1,36 +1,55 @@
 import os
 import joblib
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.metrics import accuracy_score, mean_absolute_error
+from sklearn.metrics import accuracy_score, mean_absolute_error, classification_report
 from data_utils import get_prepared_data, MODELS_SAVED_DIR
 
 def train_full_rf():
+    # Загружаем данные, подготовленные с помощью Time-Series Split и StandardScaler
     d = get_prepared_data()
     
-    print("--- ОБУЧЕНИЕ СЛУЧАЙНОГО ЛЕСА ---")
+    print(f"--- ОБУЧЕНИЕ СЛУЧАЙНОГО ЛЕСА ---")
+    print(f"Признаков в модели: {len(d['feature_names'])}")
+    print(f"Размер обучающей выборки: {len(d['X_train'])}")
+    print(f"Размер тестовой выборки: {len(d['X_test'])}\n")
 
-    # 1. Исходы
-    rf_out = RandomForestClassifier(n_estimators=200, max_depth=10, class_weight='balanced', random_state=42)
+    # 1. Прогноз ИСХОДА (П1, Х, П2)
+    # Используем class_weight='balanced', так как ничьи (X) встречаются реже побед
+    rf_out = RandomForestClassifier(
+        n_estimators=300, 
+        max_depth=12, 
+        class_weight='balanced', 
+        random_state=42,
+        n_jobs=-1 # Используем все ядра процессора для ускорения
+    )
     rf_out.fit(d['X_train'], d['y_out_train'])
-    acc_out = accuracy_score(d['y_out_test'], rf_out.predict(d['X_test']))
+    y_pred_out = rf_out.predict(d['X_test'])
+    acc_out = accuracy_score(d['y_out_test'], y_pred_out)
 
-    # 2. Тоталы
-    rf_tot = RandomForestClassifier(n_estimators=100, max_depth=10, random_state=42)
+    # 2. Прогноз ТОТАЛА (Больше 2.5 / Меньше 2.5)
+    rf_tot = RandomForestClassifier(
+        n_estimators=200, 
+        max_depth=10, 
+        random_state=42,
+        n_jobs=-1
+    )
     rf_tot.fit(d['X_train'], d['y_tot_train'])
-    acc_tot = accuracy_score(d['y_tot_test'], rf_tot.predict(d['X_test']))
+    y_pred_tot = rf_tot.predict(d['X_test'])
+    acc_tot = accuracy_score(d['y_tot_test'], y_pred_tot)
 
-    # 3. Голы
-    rf_hg = RandomForestRegressor(n_estimators=100, max_depth=7, random_state=42)
-    rf_ag = RandomForestRegressor(n_estimators=100, max_depth=7, random_state=42)
+    # 3. Регрессия ГОЛОВ (для Точного счета)
+    rf_hg = RandomForestRegressor(n_estimators=150, max_depth=8, random_state=42, n_jobs=-1)
+    rf_ag = RandomForestRegressor(n_estimators=150, max_depth=8, random_state=42, n_jobs=-1)
+    
     rf_hg.fit(d['X_train'], d['y_hg_train'])
     rf_ag.fit(d['X_train'], d['y_ag_train'])
     
     mae_hg = mean_absolute_error(d['y_hg_test'], rf_hg.predict(d['X_test']))
     mae_ag = mean_absolute_error(d['y_ag_test'], rf_ag.predict(d['X_test']))
 
-    save_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../models/saved'))
-    
-    rf_save_dir = os.path.join(save_dir, 'rf')
+    # СОХРАНЕНИЕ МОДЕЛЕЙ
+    rf_save_dir = os.path.join(MODELS_SAVED_DIR, 'rf')
     os.makedirs(rf_save_dir, exist_ok=True)
     
     joblib.dump(rf_out, os.path.join(rf_save_dir, 'rf_outcome.joblib'))
@@ -38,11 +57,27 @@ def train_full_rf():
     joblib.dump(rf_hg, os.path.join(rf_save_dir, 'rf_home_goals.joblib'))
     joblib.dump(rf_ag, os.path.join(rf_save_dir, 'rf_away_goals.joblib'))
 
-    print("\nРЕЗУЛЬТАТЫ:")
-    print(f"Outcome Accuracy: {acc_out:.4f}")
-    print(f"Total 2.5 Accuracy: {acc_tot:.4f}")
-    print(f"Avg Goals MAE: {(mae_hg + mae_ag)/2:.4f}")
-    print(f"\nМодели случайного леса сохранены")
+    # ВЫВОД РЕЗУЛЬТАТОВ
+    print("="*30)
+    print("РЕЗУЛЬТАТЫ СЛУЧАЙНОГО ЛЕСА:")
+    print(f"Результат (П1, Х, П2) Accuracy: {acc_out:.4f}")
+    print(f"Тотал Больше 2.5 Accuracy:     {acc_tot:.4f}")
+    print(f"Средняя ошибка голов (MAE):    {(mae_hg + mae_ag)/2:.4f}")
+    print("="*30)
+
+    # Дополнительно выведем отчет по классам для исходов (очень важно для диплома!)
+    print("\nДетальный отчет по исходам (0-П2, 1-Х, 2-П1):")
+    print(classification_report(d['y_out_test'], y_pred_out))
+
+    # Важность признаков (Топ-10)
+    import numpy as np
+    importances = rf_out.feature_importances_
+    indices = np.argsort(importances)[-10:]
+    print("\nТоп-10 самых важных признаков для исхода:")
+    for i in reversed(indices):
+        print(f"{d['feature_names'][i]}: {importances[i]:.4f}")
+
+    print(f"\n✅ Все модели случайного леса сохранены в: {rf_save_dir}")
 
 if __name__ == "__main__":
     train_full_rf()

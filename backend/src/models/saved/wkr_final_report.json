@@ -1,0 +1,46 @@
+[
+    {
+        "Model":"MLP (Deep)",
+        "Acc":0.4984731031,
+        "F1_Macro":0.4702067765,
+        "Prec_Macro":0.4757410846,
+        "Recall_Macro":0.4688418984,
+        "F1_Draw (X)":0.3015582035,
+        "Total_Acc":0.568240545,
+        "Goals_MAE":0.9076599479,
+        "Exact_Score":0.1174536058
+    },
+    {
+        "Model":"Random Forest",
+        "Acc":0.5081042988,
+        "F1_Macro":0.4637012803,
+        "Prec_Macro":0.4653610256,
+        "Recall_Macro":0.47208135,
+        "F1_Draw (X)":0.2467895031,
+        "Total_Acc":0.5705896171,
+        "Goals_MAE":0.916400792,
+        "Exact_Score":0.1125205544
+    },
+    {
+        "Model":"LSTM (RNN)",
+        "Acc":0.4763672358,
+        "F1_Macro":0.4611202659,
+        "Prec_Macro":0.4781437013,
+        "Recall_Macro":0.4602456219,
+        "F1_Draw (X)":0.3469055375,
+        "Total_Acc":0.5392229646,
+        "Goals_MAE":1.414501361,
+        "Exact_Score":0.0608760208
+    },
+    {
+        "Model":"GRU (RNN)",
+        "Acc":0.4622618164,
+        "F1_Macro":0.4552072788,
+        "Prec_Macro":0.4701756864,
+        "Recall_Macro":0.4542948773,
+        "F1_Draw (X)":0.3407930899,
+        "Total_Acc":0.5013610492,
+        "Goals_MAE":1.414501361,
+        "Exact_Score":0.0608760208
+    }
+]

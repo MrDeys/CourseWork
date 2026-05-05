@@ -73,7 +73,6 @@ def build_ml_dataset():
     df = get_raw_data()
     
     print("Вычисляем форму команд...")
-
     teams_history = calculate_team_features(df, window=5)
 
     feature_cols = ['date', 'team_id', 'rest_days', 'avg_xg_for_last_5', 'avg_xg_against_last_5', 
@@ -94,32 +93,47 @@ def build_ml_dataset():
     df['rest_days_diff'] = df['h_rest_days'] - df['a_rest_days']
 
     print("Вычисляем статистику личных встреч (H2H)...")
-    
     df['h2h_home_pts'] = df.apply(lambda row: calculate_h2h(row, df, window=3), axis=1)
 
+    # Добавляем временные фичи
     df['day_of_week'] = df['date'].dt.dayofweek
     df['month'] = df['date'].dt.month
 
+    # Удаляем NaN (первые туры сезона, где еще нет истории)
     df = df.dropna()
 
+    # --- ФОРМИРОВАНИЕ ТАРГЕТОВ (Целевых переменных) ---
     df['target_outcome'] = 1 
     df.loc[df['home_goals'] > df['away_goals'], 'target_outcome'] = 2
     df.loc[df['home_goals'] < df['away_goals'], 'target_outcome'] = 0
 
     df['target_total_2_5'] = ((df['home_goals'] + df['away_goals']) > 2).astype(int)
-
     df['target_home_goals'] = df['home_goals']
     df['target_away_goals'] = df['away_goals']
 
-    columns_to_drop = ['home_goals', 'away_goals', 'home_xg', 'away_xg', 'home_ppda', 'away_ppda', 'home_deep', 'away_deep']
+    # --- ОЧИСТКА И ONE-HOT ENCODING ---
+    # 1. Удаляем сырые данные матча и ID команд
+    columns_to_drop = ['id', 'home_team_id', 'away_team_id', 'home_goals', 'away_goals', 
+                       'home_xg', 'away_xg', 'home_ppda', 'away_ppda', 'home_deep', 'away_deep']
     df = df.drop(columns=columns_to_drop)
 
+    # 2. One-Hot Encoding для категориальных признаков (Лига, День недели, Месяц)
+    # drop_first=True спасает от дамми-ловушки (мультиколлинеарности)
+    df = pd.get_dummies(df, columns=['league_id', 'month', 'day_of_week'], drop_first=True)
+
+    # 3. Сортировка по дате КРИТИЧЕСКИ ВАЖНА для Time-Series Split
+    df = df.sort_values(by='date').reset_index(drop=True)
+
+    # Сохранение (оставляем колонку date, она понадобится скрипту обучения для сплита, а потом мы ее удалим)
     save_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../dataset/ml_dataset.csv'))
     
+    # Создаем директорию, если её нет
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
     df.to_csv(save_path, index=False)
     
+    print(f"✅ Датасет готов!")
     print(f"Количество строк: {len(df)}")
-    print(f"Количество признаков: {len(df.columns)}")
+    print(f"Количество признаков (с учетом One-Hot): {len(df.columns)}")
     return df
 
 if __name__ == "__main__":

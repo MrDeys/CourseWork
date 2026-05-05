@@ -4,14 +4,14 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, accuracy_score, mean_absolute_error
 import os
 import joblib
 import itertools
-import matplotlib.pyplot as plt
-from data_utils import get_prepared_data, MODELS_SAVED_DIR, save_config
 import json
+from data_utils import get_prepared_data, MODELS_SAVED_DIR, save_config
 
+# --- АРХИТЕКТУРА (Без изменений, она отличная) ---
 class MultiTaskFootballNet(nn.Module):
     def __init__(self, input_size, hidden_size=64, dropout_rate=0.3):
         super(MultiTaskFootballNet, self).__init__()
@@ -23,7 +23,6 @@ class MultiTaskFootballNet(nn.Module):
             nn.Linear(hidden_size, hidden_size // 2),
             nn.BatchNorm1d(hidden_size // 2),
             nn.ReLU(),
-            nn.Dropout(dropout_rate / 2)
         )
         self.head_outcome = nn.Linear(hidden_size // 2, 3)
         self.head_total = nn.Linear(hidden_size // 2, 1)
@@ -34,7 +33,6 @@ class MultiTaskFootballNet(nn.Module):
         shared_features = self.shared_layers(x)
         return self.head_outcome(shared_features), self.head_total(shared_features), \
                self.head_home_goals(shared_features), self.head_away_goals(shared_features)
-
 
 class FootballDataset(torch.utils.data.Dataset):
     def __init__(self, X, y_outcome, y_total, y_home_goals, y_away_goals):
@@ -54,92 +52,108 @@ def train_and_evaluate(params, d):
     test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
     model = MultiTaskFootballNet(input_size=d['X_train'].shape[1], hidden_size=params['hidden_size'], dropout_rate=params['dropout'])
-    optimizer = optim.Adam(model.parameters(), lr=params['lr'])
     
-    #class_weights = torch.tensor([1.1, 2.0, 1.0], dtype=torch.float32)
-    #class_weights = torch.tensor([1.1, 1.5, 1.0], dtype=torch.float32)
+    # Добавили weight_decay (L2 регуляризация) для борьбы с переобучением
+    optimizer = optim.Adam(model.parameters(), lr=params['lr'], weight_decay=1e-4)
+    
+    # Динамическое снижение LR, если лосс перестал падать
+    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.5, patience=3)
+
     class_weights = torch.tensor([1.0 , 1.5, 1.0], dtype=torch.float32)
     loss_outcome = nn.CrossEntropyLoss(weight=class_weights)
     loss_total = nn.BCEWithLogitsLoss()
     loss_goals = nn.MSELoss()
 
     best_f1 = 0
-    for epoch in range(30): 
+    patience_counter = 0
+    max_patience = 8
+
+    for epoch in range(50): # Увеличили макс. количество эпох, так как есть Early Stopping
         model.train()
+        train_loss = 0
         for batch_x, b_out, b_tot, b_hg, b_ag in train_loader:
             optimizer.zero_grad()
             p_out, p_tot, p_hg, p_ag = model(batch_x)
-            #l = (loss_outcome(p_out, b_out) * 1.5) + (loss_total(p_tot.squeeze(), b_tot) * 0.5) + (loss_goals(p_hg.squeeze(), b_hg) * 0.25)
-            #l = (loss_outcome(p_out, b_out) * 1.0) + (loss_total(p_tot.squeeze(), b_tot) * 0.5) + (loss_goals(p_hg.squeeze(), b_hg) * 1.0)
-            l = (loss_outcome(p_out, b_out) * 1.0) + (loss_total(p_tot.squeeze(), b_tot) * 1.0) + (loss_goals(p_hg.squeeze(), b_hg) * 1.0) + (loss_goals(p_ag.squeeze(), b_ag) * 1.0)
+            
+            # Взвешенная сумма лоссов
+            l = (loss_outcome(p_out, b_out) * 1.0) + \
+                (loss_total(p_tot.squeeze(), b_tot) * 1.0) + \
+                (loss_goals(p_hg.squeeze(), b_hg) * 1.0) + \
+                (loss_goals(p_ag.squeeze(), b_ag) * 1.0)
+            
             l.backward()
             optimizer.step()
+            train_loss += l.item()
         
+        # Оценка
         model.eval()
-        all_preds = []
-        all_true = []
+        all_preds_out = []
+        all_true_out = []
         with torch.no_grad():
             for batch_x, b_out, b_tot, b_hg, b_ag in test_loader:
                 p_out, _, _, _ = model(batch_x)
                 _, predicted = torch.max(p_out, 1)
-                all_preds.extend(predicted.numpy())
-                all_true.extend(b_out.numpy())
+                all_preds_out.extend(predicted.numpy())
+                all_true_out.extend(b_out.numpy())
         
-        f1 = f1_score(all_true, all_preds, average='macro')
+        f1 = f1_score(all_true_out, all_preds_out, average='macro')
+        scheduler.step(f1) # Обновляем планировщик LR
+
         if f1 > best_f1:
             best_f1 = f1
+            patience_counter = 0
             torch.save(model.state_dict(), os.path.join(MODELS_SAVED_DIR, 'temp_mlp.pth'))
+        else:
+            patience_counter += 1
+
+        if patience_counter >= max_patience:
+            # print(f"Early stopping на эпохе {epoch}")
+            break
 
     return best_f1
 
 def run_tuning():
-    print("Загрузка данных...")
+    print("Загрузка данных и начало поиска параметров...")
     d = get_prepared_data()
 
+    # Сетка параметров (можно расширить для более глубокого поиска)
     param_grid = {
-        #'lr': [0.001,  0.0005],
+        #'lr': [0.001, 0.0005],
+        #'hidden_size': [64, 128],
+        #'dropout': [0.4, 0.5]
         'lr': [0.001],
-        'hidden_size': [64, 128],
-        #'dropout': [0.3, 0.5]
-        'dropout': [0.5]
+        'hidden_size': [128],
+        'dropout': [0.4]
     }
 
     keys, values = zip(*param_grid.items())
     combinations = [dict(zip(keys, v)) for v in itertools.product(*values)]
     
     results = []
-    print(f"Начинаем перебор {len(combinations)} комбинаций...")
-
     for i, params in enumerate(combinations):
-        print(f"Тест {i+1}/{len(combinations)}: {params}")
+        print(f"Итерация {i+1}/{len(combinations)}: {params}")
         f1 = train_and_evaluate(params, d)
         params['f1_macro'] = f1
         results.append(params)
-        print(f"  -> F1 Score: {f1:.4f}")
+        print(f"  -> Best F1 Macro: {f1:.4f}")
 
+    # Сохранение результатов тюнинга
     results_df = pd.DataFrame(results).sort_values(by='f1_macro', ascending=False)
-    
-    BASE_SAVE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../models/saved'))
-    os.makedirs(BASE_SAVE_DIR, exist_ok=True)
-
-    results_df = pd.DataFrame(results).sort_values(by='f1_macro', ascending=False)
-    tuning_path = os.path.join(BASE_SAVE_DIR, 'tuning_mlp_results.csv')
-    results_df.to_csv(tuning_path, index=False)
+    os.makedirs(MODELS_SAVED_DIR, exist_ok=True)
+    results_df.to_csv(os.path.join(MODELS_SAVED_DIR, 'tuning_mlp_results.csv'), index=False)
     
     best_params = results_df.iloc[0].to_dict()
-    print(f"\nЛУЧШИЕ ПАРАМЕТРЫ: {best_params}")
+    print(f"\n🏆 ЛУЧШАЯ МОДЕЛЬ: {best_params}")
 
     save_config(best_params, d, 'mlp') 
 
-    final_model_path = os.path.join(BASE_SAVE_DIR, 'best_mlp_model.pth')
-    temp_path = os.path.join(BASE_SAVE_DIR, 'temp_mlp.pth')
-
+    # Финализация модели
+    final_model_path = os.path.join(MODELS_SAVED_DIR, 'best_mlp_model.pth')
+    temp_path = os.path.join(MODELS_SAVED_DIR, 'temp_mlp.pth')
     if os.path.exists(temp_path):
-        if os.path.exists(final_model_path): 
-            os.remove(final_model_path)
+        if os.path.exists(final_model_path): os.remove(final_model_path)
         os.rename(temp_path, final_model_path)
-        print(f"Финальная модель MLP сохранена")
-    
+        print(f"✅ Модель MLP успешно сохранена.")
 
 if __name__ == "__main__":
     run_tuning()

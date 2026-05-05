@@ -1,6 +1,6 @@
 {
     "hidden_size": 128,
-    "num_layers": 2,
-    "dropout_rate": 0.3,
-    "input_size": 25
+    "num_layers": 1,
+    "dropout_rate": 0.5,
+    "input_size": 9
 }
