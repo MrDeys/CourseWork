@@ -1,46 +1,35 @@
 [
     {
         "Model":"MLP (Deep)",
-        "Acc":0.4984731031,
-        "F1_Macro":0.4702067765,
-        "Prec_Macro":0.4757410846,
-        "Recall_Macro":0.4688418984,
-        "F1_Draw (X)":0.3015582035,
-        "Total_Acc":0.568240545,
-        "Goals_MAE":0.9076599479,
-        "Exact_Score":0.1174536058
-    },
-    {
-        "Model":"Random Forest",
-        "Acc":0.5081042988,
-        "F1_Macro":0.4637012803,
-        "Prec_Macro":0.4653610256,
-        "Recall_Macro":0.47208135,
-        "F1_Draw (X)":0.2467895031,
-        "Total_Acc":0.5705896171,
-        "Goals_MAE":0.916400792,
-        "Exact_Score":0.1125205544
-    },
-    {
-        "Model":"LSTM (RNN)",
-        "Acc":0.4763672358,
-        "F1_Macro":0.4611202659,
-        "Prec_Macro":0.4781437013,
-        "Recall_Macro":0.4602456219,
-        "F1_Draw (X)":0.3469055375,
-        "Total_Acc":0.5392229646,
-        "Goals_MAE":1.414501361,
-        "Exact_Score":0.0608760208
+        "Acc":0.5179282869,
+        "F1_Macro":0.4755656414,
+        "Prec_Macro":0.4795587063,
+        "Recall_Macro":0.4800914909,
+        "F1_Draw (X)":0.2724358974,
+        "Total_Acc":0.5732364659,
+        "Goals_MAE":0.9517646134,
+        "Exact_Score":0.1242090462
     },
     {
         "Model":"GRU (RNN)",
-        "Acc":0.4622618164,
-        "F1_Macro":0.4552072788,
-        "Prec_Macro":0.4701756864,
-        "Recall_Macro":0.4542948773,
-        "F1_Draw (X)":0.3407930899,
-        "Total_Acc":0.5013610492,
-        "Goals_MAE":1.414501361,
-        "Exact_Score":0.0608760208
+        "Acc":0.4890965732,
+        "F1_Macro":0.4739682517,
+        "Prec_Macro":0.4844673749,
+        "Recall_Macro":0.4704825288,
+        "F1_Draw (X)":0.3225010284,
+        "Total_Acc":0.53894081,
+        "Goals_MAE":0.9058138366,
+        "Exact_Score":0.1190989696
+    },
+    {
+        "Model":"Random Forest",
+        "Acc":0.5174595735,
+        "F1_Macro":0.4672204072,
+        "Prec_Macro":0.4693530301,
+        "Recall_Macro":0.4789754485,
+        "F1_Draw (X)":0.2289988493,
+        "Total_Acc":0.567846262,
+        "Goals_MAE":0.9109122864,
+        "Exact_Score":0.109913288
     }
 ]

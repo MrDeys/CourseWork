@@ -2,6 +2,7 @@
 from flask import Flask
 from flask_cors import CORS
 from .api.routes import bp
+from update import run_full_update 
 
 def create_app():
     app = Flask(__name__)
@@ -11,5 +12,8 @@ def create_app():
 
     # Регистрируем наши маршруты
     app.register_blueprint(bp, url_prefix='/api/matches')
+
+    # Запускаем обновление в фоновом потоке, чтобы сайт открылся сразу
+    # threading.Thread(target=run_full_update).start()
 
     return app

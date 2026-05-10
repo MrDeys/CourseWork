@@ -1,5 +1,13 @@
-from src.app import create_app 
+import threading
+from src.app import create_app
+from update import run_full_update # Наш новый скрипт
+
+app = create_app()
 
 if __name__ == '__main__':
-    app = create_app()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    # Запускаем обновление в фоновом потоке. 
+    # Сайт откроется сразу, а данные обновятся через пару минут в фоне.
+    update_thread = threading.Thread(target=run_full_update)
+    update_thread.start()
+    
+    app.run(host='0.0.0.0', port=5000)

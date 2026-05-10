@@ -116,9 +116,16 @@ def run_tuning_gru():
     train_data, test_data = full_data[:split], full_data[split:]
 
     param_grid = {
-        'lr': [0.0005],
-        'hidden_size': [128],
-        'num_layers': [1]
+        'lr': [0.001, 0.0005],
+    
+    'hidden_size': [64, 128, 256],
+    
+    'num_layers': [1, 2],
+    
+    'dropout': [0.3, 0.5],
+    
+    # Размер батча: тоже влияет на стабильность обучения рекуррентных сетей
+    'batch_size': [32, 64]
     }
 
     keys, values = zip(*param_grid.items())

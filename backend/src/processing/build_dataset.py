@@ -19,7 +19,7 @@ def get_raw_data() -> pd.DataFrame:
     df['date'] = pd.to_datetime(df['date'])
     return df
 
-def calculate_h2h(row, df_all, window=3):
+def calculate_h2h(row, df_all, window=5):
     past_matches = df_all[
         (df_all['date'] < row['date']) &
         (((df_all['home_team_id'] == row['home_team_id']) & (df_all['away_team_id'] == row['away_team_id'])) |
@@ -93,7 +93,7 @@ def build_ml_dataset():
     df['rest_days_diff'] = df['h_rest_days'] - df['a_rest_days']
 
     print("Вычисляем статистику личных встреч (H2H)...")
-    df['h2h_home_pts'] = df.apply(lambda row: calculate_h2h(row, df, window=3), axis=1)
+    df['h2h_home_pts'] = df.apply(lambda row: calculate_h2h(row, df, window=5), axis=1)
 
     # Добавляем временные фичи
     df['day_of_week'] = df['date'].dt.dayofweek

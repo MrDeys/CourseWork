@@ -120,10 +120,19 @@ def run_tuning_lstm():
     train_data, test_data = full_data[:split], full_data[split:]
 
     param_grid = {
-        'lr': [0.0005],
-        'hidden_size': [128],
-        'num_layers': [1],
-        'dropout': [0.5]
+        'lr': [0.001, 0.0007, 0.0005],
+    
+        # Размер вектора памяти. 128 обычно "золотая середина" для таких задач
+        'hidden_size': [64, 128],
+        
+        # Количество рекуррентных слоев. Более 2 слоев часто ведут к затуханию градиента
+        'num_layers': [1, 2],
+        
+        # Dropout в LSTM обычно применяется между слоями
+        'dropout': [0.2, 0.4, 0.5],
+        
+        # Дополнительно: L2 регуляризация (weight_decay) помогает при работе с временными рядами
+        'weight_decay': [1e-5, 1e-4]
     }
 
     keys, values = zip(*param_grid.items())

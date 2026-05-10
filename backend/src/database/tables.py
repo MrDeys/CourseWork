@@ -23,6 +23,7 @@ class Team(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True) 
     logo_url = Column(String, nullable=True)
+    name_ru = Column(String, nullable=True)
 
 class Match(Base):
     __tablename__ = 'matches'

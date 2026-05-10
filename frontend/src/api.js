@@ -39,3 +39,27 @@ export const getMatchId = async (matchId) => {
     return null;
   }
 };
+
+export const getLeagueTable = async (leagueName) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/matches/table/${leagueName}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching table:", error);
+    return [];
+  }
+};
+
+export const getTeamComparison = async (team1, team2) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/matches/compare`, {
+      params: { team1, team2 },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Ошибка при сравнении команд:", error);
+    return null;
+  }
+};
