@@ -1,10 +1,12 @@
+--find-links https://download.pytorch.org/whl/cpu
+torch==2.1.0+cpu
+gunicorn
 flask
 flask-cors
 sqlalchemy
 psycopg2-binary
 pandas
 numpy
-torch
 joblib
 soccerdata
 deep-translator
@@ -12,5 +14,4 @@ thefuzz
 python-dotenv
 requests
 beautifulsoup4
-scikit-learn
-gunicorn
+scikit-learns
