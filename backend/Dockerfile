@@ -31,4 +31,4 @@ EXPOSE 5000
 
 # Команда запуска (сначала инициализация БД, потом запуск приложения)
 # Вместо python run.py
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "run:app", "--timeout", "120"]
+CMD gunicorn --bind 0.0.0.0:10000 run:app --timeout 120 --workers 1
