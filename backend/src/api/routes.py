@@ -1,5 +1,7 @@
 from flask import Blueprint, jsonify, request
 from ..services.match_service import MatchService
+from update import run_full_update # Убедись, что импорт правильный
+import threading
 
 # Создаем Blueprint для API матчей
 bp = Blueprint('matches_api', __name__)
@@ -56,3 +58,9 @@ def compare_teams():
     if data:
         return jsonify(data)
     return jsonify({"error": "Команды не найдены"}), 404
+
+@bp.route('/force-update-neural-data-777', methods=['GET'])
+def force_update():
+    # Запускаем обновление в отдельном потоке, чтобы браузер не ждал
+    threading.Thread(target=run_full_update).start()
+    return "🚀 Процесс обновления запущен в фоне! Следите за логами Render.", 200
