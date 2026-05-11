@@ -12,8 +12,9 @@ HEADERS = {
 
 def get_wikipedia_logo(team_name):
     try:
+        # Добавляем " football club", чтобы поиск был точнее
         search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(team_name + ' football club')}&utf8=&format=json"
-        search_res = requests.get(search_url, headers=HEADERS).json()
+        search_res = requests.get(search_url, headers=HEADERS, timeout=5).json()
         
         if not search_res['query']['search']:
             return None
@@ -21,7 +22,7 @@ def get_wikipedia_logo(team_name):
         page_title = search_res['query']['search'][0]['title']
         
         page_url = f"https://en.wikipedia.org/wiki/{urllib.parse.quote(page_title)}"
-        html_res = requests.get(page_url, headers=HEADERS)
+        html_res = requests.get(page_url, headers=HEADERS, timeout=5)
         soup = BeautifulSoup(html_res.text, 'html.parser')
         
         infobox = soup.find('table', {'class': 'infobox'})
@@ -32,6 +33,7 @@ def get_wikipedia_logo(team_name):
                 if img_url.startswith('//'):
                     img_url = 'https:' + img_url
                 
+                # Получаем оригинальное изображение вместо миниатюры
                 if '/thumb/' in img_url:
                     img_url = img_url.replace('/thumb/', '/')
                     img_url = img_url.rsplit('/', 1)[0]
@@ -45,12 +47,20 @@ def get_wikipedia_logo(team_name):
 def update_team_logos():
     session = SessionLocal()
     
-    teams = session.query(Team).all()
+    # ИСПРАВЛЕНИЕ: Берем только те команды, у которых логотипа ЕЩЕ НЕТ
+    teams_to_update = session.query(Team).filter(
+        (Team.logo_url == None) | (Team.logo_url == "")
+    ).all()
     
-    print(f"Запуск ПРИНУДИТЕЛЬНОГО скачивания логотипов для {len(teams)} команд...")
+    if not teams_to_update:
+        print("✅ Все логотипы уже загружены. Пропускаю...")
+        session.close()
+        return
+
+    print(f"Запуск догрузки логотипов для {len(teams_to_update)} команд...")
     
     found = 0
-    for team in teams:
+    for team in teams_to_update:
         print(f"Ищем: {team.name:30}", end="", flush=True)
         
         url = get_wikipedia_logo(team.name)
@@ -58,16 +68,21 @@ def update_team_logos():
         if url:
             team.logo_url = url
             found += 1
-            print(f"[НАЙДЕНО] {url[:50]}...")
+            print(f"[НАЙДЕНО]")
         else:
-            team.logo_url = None 
+            # Не ставим None принудительно, чтобы не затирать, если вдруг ошибка сети
             print("[НЕ НАЙДЕНО]")
             
-        time.sleep(1)
+        # Небольшая пауза, чтобы Википедия не забанила
+        time.sleep(0.5)
+
+        # Сохраняем каждые 10 команд, чтобы не потерять прогресс при сбое
+        if found % 10 == 0:
+            session.commit()
 
     session.commit()
     session.close()
-    print(f"Обновление завершено. Успешно обновлено {found} из {len(teams)}.")
+    print(f"Обновление завершено. Успешно добавлено {found} новых логотипов.")
 
 if __name__ == "__main__":
     update_team_logos()

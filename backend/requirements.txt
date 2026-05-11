@@ -1,0 +1,16 @@
+flask
+flask-cors
+sqlalchemy
+psycopg2-binary
+pandas
+numpy
+torch
+joblib
+soccerdata
+deep-translator
+thefuzz
+python-dotenv
+requests
+beautifulsoup4
+scikit-learn
+gunicorn

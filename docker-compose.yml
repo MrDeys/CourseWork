@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  # 1. База данных PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: neuropredict_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. Бэкенд (Flask + AI)
+  backend:
+    build: ./backend
+    container_name: neuropredict_backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/models:/app/models # Прокидываем веса моделей
+
+  # 3. Фронтенд (React)
+  frontend:
+    build: ./frontend
+    container_name: neuropredict_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

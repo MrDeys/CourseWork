@@ -12,6 +12,7 @@ if BASE_DIR not in sys.path:
 
 # --- ИМПОРТЫ ИЗ ТВОЕЙ СТРУКТУРЫ ---
 try:
+    from src.database.tables import init_db
     # Загрузка данных из src/scripts/loading_soccerdata.py
     from src.scripts.loading_soccerdata import load_data
     
@@ -22,6 +23,9 @@ try:
     # Генератор прогнозов из src/predictor.py
     # (убедись, что класс внутри называется PredictionGenerator)
     from src.predictor import PredictionGenerator
+
+    from src.scripts.fetch_logos import get_wikipedia_logo, update_team_logos
+    from src.scripts.ru_team_names import translate_teams
     
     print("✅ Все модули успешно обнаружены")
 except ImportError as e:
@@ -30,26 +34,43 @@ except ImportError as e:
     sys.exit(1)
 
 def run_full_update():
-    """Полный цикл: Сбор -> ELO -> Прогнозы"""
     print(f"\n[{datetime.datetime.now()}] 🚀 Старт автоматического обновления...")
+    
+    # 0. Таблицы
+    init_db()
 
+    # 1. Базовая загрузка (Understat)
     try:
-        # 1. Загрузка данных Understat
-        print("\n--- [1/3] Загрузка данных Understat ---")
+        print("\n--- [1/5] Загрузка данных Understat ---")
         load_data()
+    except Exception as e: print(f"⚠️ Ошибка в load_data: {e}")
 
-        # 2. Рейтинг ELO
-        print("\n--- [2/3] Синхронизация рейтинга ELO ---")
+    # 2. Перевод (Очень важно для красоты!)
+    try:
+        print("\n--- [2/5] Локализация команд ---")
+        translate_teams()
+    except Exception as e: print(f"⚠️ Ошибка в переводе: {e}")
+
+    # 3. Логотипы (Критично для UI!)
+    try:
+        print("\n--- [3/5] Загрузка эмблем ---")
+        update_team_logos()
+    except Exception as e: print(f"⚠️ Ошибка в логотипах: {e}")
+
+    # 4. ELO (Ограничим поиск, чтобы не ловить бан)
+    try:
+        print("\n--- [4/5] Синхронизация ELO ---")
         auto_sync_elo()
+    except Exception as e: print(f"⚠️ Ошибка в ELO (ClubElo может быть недоступен): {e}")
 
-        # 3. Генерация прогнозов
-        print("\n--- [3/3] Генерация новых прогнозов (Нейросеть) ---")
+    # 5. Прогнозы
+    try:
+        print("\n--- [5/5] Генерация прогнозов ---")
         gen = PredictionGenerator()
         gen.run_generation()
+    except Exception as e: print(f"⚠️ Ошибка в прогнозах: {e}")
 
-        print(f"\n✅ [{datetime.datetime.now()}] Все данные обновлены!")
-    except Exception as e:
-        print(f"❌ Произошла ошибка во время обновления: {e}")
+    print(f"\n✅ Обновление завершено (с учетом возможных пропусков).")
 
 if __name__ == "__main__":
     run_full_update()
