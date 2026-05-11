@@ -38,8 +38,7 @@ def load_data(full_scan=False):
         # Отключаем загрузку тяжелых профилей игроков, берем только базовые данные матчей
         understat = sd.Understat(
             leagues=list(LEAGUES_MAPPING.keys()), 
-            seasons=target_seasons,
-            no_cache=True
+            seasons=target_seasons
         )
         #understat = sd.Understat(leagues=list(LEAGUES_MAPPING.keys()), seasons=target_seasons)
         
