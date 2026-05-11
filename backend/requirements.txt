@@ -8,7 +8,7 @@ psycopg2-binary
 pandas
 numpy
 joblib
-soccerdata
+soccerdata==1.3.3
 deep-translator
 thefuzz
 python-dotenv

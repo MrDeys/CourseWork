@@ -32,7 +32,16 @@ def load_data(full_scan=False):
     print(f"🚀 Загрузка данных Understat (Точное время + Дельта)...")
     
     try:
-        understat = sd.Understat(leagues=list(LEAGUES_MAPPING.keys()), seasons=target_seasons)
+        import os
+        os.environ["SOCCERDATA_NOCACHE"] = "True" # Принудительно отключаем проблемный кэш
+
+        # Отключаем загрузку тяжелых профилей игроков, берем только базовые данные матчей
+        understat = sd.Understat(
+            leagues=list(LEAGUES_MAPPING.keys()), 
+            seasons=target_seasons,
+            no_cache=True
+        )
+        #understat = sd.Understat(leagues=list(LEAGUES_MAPPING.keys()), seasons=target_seasons)
         
         # 1. Загружаем данные
         df_schedule = understat.read_schedule().reset_index()

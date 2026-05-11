@@ -17,8 +17,8 @@ RUN pip install --upgrade pip && \
 
 # 3. Решаем проблему с TLS библиотекой для soccerdata
 # Мы создаем папку и качаем файл ТУДА, где библиотека его ищет в Linux
-RUN mkdir -p /root/.local/share/tls_requests/bin/
-RUN curl -L https://github.com/bogdanfinn/tls-client/releases/download/v1.13.1/tls-client-xgo-1.13.1-linux-amd64.so -o /root/.local/share/tls_requests/bin/tls-client-xgo-1.13.1-linux-amd64.so
+#RUN mkdir -p /root/.local/share/tls_requests/bin/
+#RUN curl -L https://github.com/bogdanfinn/tls-client/releases/download/v1.13.1/tls-client-xgo-1.13.1-linux-amd64.so -o /root/.local/share/tls_requests/bin/tls-client-xgo-1.13.1-linux-amd64.so
 # Даем права на выполнение этого файла
 RUN chmod +x /root/.local/share/tls_requests/bin/tls-client-xgo-1.13.1-linux-amd64.so
 
