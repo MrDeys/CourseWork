@@ -1,8 +1,14 @@
-import soccerdata as sd
 import pandas as pd
 import numpy as np
 import sys, os, time
 from datetime import datetime, timedelta
+
+# ПРЯМОЙ ИМПОРТ КЛАССА (для обхода ошибки AttributeError)
+try:
+    from soccerdata.understat import Understat
+except ImportError:
+    import soccerdata as sd
+    Understat = sd.Understat
 
 # Авто-определение путей
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -36,10 +42,7 @@ def load_data(full_scan=False):
         os.environ["SOCCERDATA_NOCACHE"] = "True" # Принудительно отключаем проблемный кэш
 
         # Отключаем загрузку тяжелых профилей игроков, берем только базовые данные матчей
-        understat = sd.Understat(
-            leagues=list(LEAGUES_MAPPING.keys()), 
-            seasons=target_seasons
-        )
+        understat = Understat(leagues=list(LEAGUES_MAPPING.keys()), seasons=target_seasons)
         #understat = sd.Understat(leagues=list(LEAGUES_MAPPING.keys()), seasons=target_seasons)
         
         # 1. Загружаем данные
