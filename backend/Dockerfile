@@ -1,5 +1,5 @@
 # Используем легкий образ Python
-FROM python:3.10-slim
+FROM python:3.11-slim
 
 # Устанавливаем системные зависимости для psycopg2 и работы с сетью
 RUN apt-get update && apt-get install -y \
