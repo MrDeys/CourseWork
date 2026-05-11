@@ -10,4 +10,5 @@ if __name__ == '__main__':
     update_thread = threading.Thread(target=run_full_update)
     update_thread.start()
     
-    app.run(host='0.0.0.0', port=5000)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)

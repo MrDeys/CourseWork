@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = "https://neuropredict-backend.onrender.com";
+const API_BASE_URL = "https://neuropredict-backend.onrender.com/api";
 
 const parseData = (data) => {
   if (typeof data === "string") {
