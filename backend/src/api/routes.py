@@ -64,3 +64,7 @@ def force_update():
     # Запускаем обновление в отдельном потоке, чтобы браузер не ждал
     threading.Thread(target=run_full_update).start()
     return "🚀 Процесс обновления запущен в фоне! Следите за логами Render.", 200
+
+@app.route('/')
+def home():
+    return "NeuroPredict API is running!", 200

@@ -1,34 +1,26 @@
-# Используем легкий образ Python
 FROM python:3.11-slim
 
-# Устанавливаем системные зависимости для psycopg2 и работы с сетью
+# Устанавливаем системные зависимости + curl
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем зависимости и устанавливаем их
+# Создаем папку, куда soccerdata хочет положить библиотеку, и качаем её заранее
+RUN mkdir -p /usr/local/lib/python3.11/site-packages/tls_requests/bin/
+RUN curl -L https://github.com/bogdanfinn/tls-client/releases/download/v1.13.1/tls-client-xgo-1.13.1-linux-amd64.so -o /usr/local/lib/python3.11/site-packages/tls_requests/bin/tls-client-xgo-1.13.1-linux-amd64.so
+
 COPY requirements.txt .
 
-# 1. Сначала устанавливаем только PyTorch (самый тяжелый)
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir -r requirements.txt
 
-# 2. Потом все остальные зависимости
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Копируем весь код бэкенда
 COPY . .
 
-# Устанавливаем переменную окружения, чтобы Python видел папку src
 ENV PYTHONPATH=/app
-
-# Открываем порт
-EXPOSE 5000
-
-# Команда запуска (сначала инициализация БД, потом запуск приложения)
-# Вместо python run.py
-CMD gunicorn --bind 0.0.0.0:10000 run:app --timeout 120 --workers 1
+# Важно: на Render для Docker-сервисов порт обычно 10000
+CMD python -m gunicorn --bind 0.0.0.0:10000 run:app --timeout 120 --workers 1
