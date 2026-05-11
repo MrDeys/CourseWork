@@ -12,8 +12,13 @@ WORKDIR /app
 
 # Копируем зависимости и устанавливаем их
 COPY requirements.txt .
+
+# 1. Сначала устанавливаем только PyTorch (самый тяжелый)
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
+# 2. Потом все остальные зависимости
+RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем весь код бэкенда
 COPY . .
