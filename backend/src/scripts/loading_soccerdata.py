@@ -26,7 +26,8 @@ def _clean_val(val, val_type=float):
 def load_data(full_scan=False):
     session = SessionLocal()
     # Для ежедневного обновления берем только текущие сезоны
-    target_seasons = ['2425', '2526'] if not full_scan else ['1415','1516','1617','1718','1819','1920','2021','2122','2223','2324','2425', '2526']
+    #target_seasons = ['2425', '2526'] if not full_scan else ['1415','1516','1617','1718','1819','1920','2021','2122','2223','2324','2425', '2526']
+    target_seasons = ['2526'] 
     
     print(f"🚀 Загрузка данных Understat (Точное время + Дельта)...")
     
