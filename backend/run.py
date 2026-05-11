@@ -4,6 +4,10 @@ from update import run_full_update # Наш новый скрипт
 
 app = create_app()
 
+@app.route('/')
+def health():
+    return "NeuroPredict API is running", 200
+
 if __name__ == '__main__':
     # Запускаем обновление в фоновом потоке. 
     # Сайт откроется сразу, а данные обновятся через пару минут в фоне.
