@@ -6,8 +6,8 @@ flask
 flask-cors
 sqlalchemy
 psycopg2-binary
-pandas
-numpy
+pandas==2.1.4
+numpy==1.26.4
 joblib
 deep-translator
 thefuzz
