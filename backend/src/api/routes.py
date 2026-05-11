@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from ..services.match_service import MatchService
-from update import run_full_update # Убедись, что импорт правильный
+from update import run_full_update 
 import threading
 
 # Создаем Blueprint для API матчей
@@ -22,8 +22,7 @@ def get_matches_route():
 @bp.route('/<int:match_id>', methods=['GET'])
 def get_match_by_id_route(match_id: int):
     """
-    Эндпоинт для получения детальной информации о конкретном матче:
-    составы, xG статистика последних игр, форма команд и прогноз нейросети.
+    Эндпоинт для получения детальной информации о конкретном матче.
     """
     match = match_service.get_match_id(match_id)
 
@@ -36,14 +35,12 @@ def get_match_by_id_route(match_id: int):
 def get_table(league_name):
     """
     Эндпоинт для получения актуальной турнирной таблицы лиги.
-    Данные подтягиваются динамически через библиотеку soccerdata (Understat).
     """
     table = match_service.get_league_table(league_name)
     
     if table:
         return jsonify(table)
     else:
-        # Если таблица не найдена или произошла ошибка парсинга
         return jsonify([]), 200
     
 @bp.route('/compare', methods=['GET'])
@@ -61,10 +58,12 @@ def compare_teams():
 
 @bp.route('/force-update-neural-data-777', methods=['GET'])
 def force_update():
-    # Запускаем обновление в отдельном потоке, чтобы браузер не ждал
+    # Запускаем обновление в отдельном потоке
     threading.Thread(target=run_full_update).start()
     return "🚀 Процесс обновления запущен в фоне! Следите за логами Render.", 200
 
-@app.route('/')
-def home():
-    return "NeuroPredict API is running!", 200
+# ИСПРАВЛЕНО: заменил @app на @bp. 
+# Теперь этот адрес будет: /api/matches/check
+@bp.route('/check')
+def check():
+    return "NeuroPredict API Match Blueprint is working!", 200
