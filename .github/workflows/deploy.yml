@@ -2,7 +2,7 @@ name: Deploy React App
 
 on:
   push:
-    branches: ["main"] # Проверь, что твоя ветка называется main, а не master
+    branches: ["master"] # Проверь, что твоя ветка называется main, а не master
 
 permissions:
   contents: read
