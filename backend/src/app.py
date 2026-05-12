@@ -18,6 +18,7 @@ def create_app():
             # Просто пишем в лог, но не роняем сервер
             print(f"⚠️ БД пока не готова: {e}")
 
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    #CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
     app.register_blueprint(bp, url_prefix='/api/matches')
     return app

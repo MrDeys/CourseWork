@@ -7,7 +7,7 @@ import ComparePage from "./pages/ComparePage";
 
 function App() {
   return (
-    <Router>
+    <Router basename="/GraduateWork">
       <div className="flex flex-col min-h-screen bg-color-bg text-color-text-white">
         <Header />
         <main className="flex-grow container mx-auto px-4 pt-1">

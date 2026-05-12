@@ -1,14 +1,25 @@
 import axios from "axios";
 
+// 1. Указываем адрес бэкенда (изменится при перезапуске туннеля)
 //const API_BASE_URL = "http://localhost:5000/api";
 const API_BASE_URL = "https://nice-falcons-follow.loca.lt/api";
 
+// 2. Создаем специальный экземпляр axios с настройками для туннеля
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Bypass-Tunnel-Reminder": "true", // Магия для пропуска синей страницы Localtunnel
+    "Content-Type": "application/json",
+  },
+});
+
+// Умный парсер данных
 const parseData = (data) => {
   if (typeof data === "string") {
     try {
       return JSON.parse(data);
     } catch (e) {
-      console.error("Ошибка парсинга JSON строки от API:", e);
+      console.error("Ошибка парсинга JSON:", e);
       return null;
     }
   }
@@ -17,11 +28,12 @@ const parseData = (data) => {
 
 export const getMatches = async (leagueCode = null) => {
   try {
-    let url = `${API_BASE_URL}/matches/`;
+    // ВАЖНО: используем api.get, путь пишем ОТНОСИТЕЛЬНО baseURL
+    let url = "/matches/";
     if (leagueCode) {
       url += `?league=${leagueCode}`;
     }
-    const response = await axios.get(url);
+    const response = await api.get(url);
     const parsedData = parseData(response.data);
     return Array.isArray(parsedData) ? parsedData : [];
   } catch (error) {
@@ -32,9 +44,8 @@ export const getMatches = async (leagueCode = null) => {
 
 export const getMatchId = async (matchId) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/matches/${matchId}`);
-    const parsedData = parseData(response.data);
-    return parsedData;
+    const response = await api.get(`/matches/${matchId}`);
+    return parseData(response.data);
   } catch (error) {
     console.error(`Ошибка при загрузке матча:`, error);
     return null;
@@ -43,9 +54,7 @@ export const getMatchId = async (matchId) => {
 
 export const getLeagueTable = async (leagueName) => {
   try {
-    const response = await axios.get(
-      `${API_BASE_URL}/matches/table/${leagueName}`,
-    );
+    const response = await api.get(`/matches/table/${leagueName}`);
     return response.data;
   } catch (error) {
     console.error("Error fetching table:", error);
@@ -55,7 +64,7 @@ export const getLeagueTable = async (leagueName) => {
 
 export const getTeamComparison = async (team1, team2) => {
   try {
-    const response = await axios.get(`${API_BASE_URL}/matches/compare`, {
+    const response = await api.get("/matches/compare", {
       params: { team1, team2 },
     });
     return response.data;
