@@ -67,7 +67,6 @@ class MatchService:
     def _format_match(self, session, match, detailed=False):
         pred = match.predictions[-1] if match.predictions else None
         
-        # На лету исправляем статус, если есть голы
         status = "FINISHED" if match.home_goals is not None else match.status
 
         data = {
@@ -75,8 +74,20 @@ class MatchService:
             "utcDate": match.date.isoformat() + "Z",
             "league": match.league.name,
             "status": status,
-            "homeTeam": {"name": match.home_team.name, "name_ru": getattr(match.home_team, 'name_ru', match.home_team.name), "logo_url": match.home_team.logo_url, "elo": self._safe_float(match.home_elo, 1500.0)},
-            "awayTeam": {"name": match.away_team.name, "name_ru": getattr(match.away_team, 'name_ru', match.away_team.name), "logo_url": match.away_team.logo_url, "elo": self._safe_float(match.away_elo, 1500.0)},
+            "homeTeam": {
+                "id": match.home_team_id, # Добавили ID
+                "name": match.home_team.name, 
+                "name_ru": getattr(match.home_team, 'name_ru', match.home_team.name), 
+                "logo_url": match.home_team.logo_url, 
+                "elo": self._safe_float(match.home_elo, 1500.0)
+            },
+            "awayTeam": {
+                "id": match.away_team_id, # Добавили ID
+                "name": match.away_team.name, 
+                "name_ru": getattr(match.away_team, 'name_ru', match.away_team.name), 
+                "logo_url": match.away_team.logo_url, 
+                "elo": self._safe_float(match.away_elo, 1500.0)
+            },
             "score": {"home": match.home_goals, "away": match.away_goals},
             "prediction": None
         }
@@ -97,8 +108,26 @@ class MatchService:
             data["homeTeam"].update({"stats_last_5": h_d["stats"], "history": h_d["history"]})
             data["awayTeam"].update({"stats_last_5": a_d["stats"], "history": a_d["history"]})
             
-            h2h_raw = session.query(Match).filter(or_(and_(Match.home_team_id == match.home_team_id, Match.away_team_id == match.away_team_id), and_(Match.home_team_id == match.away_team_id, Match.away_team_id == match.home_team_id)), Match.status == 'FINISHED', Match.date < match.date).order_by(Match.date.desc()).limit(5).all()
-            data["h2h"] = [{"date": m.date.strftime('%d.%m.%y'), "home": getattr(m.home_team, 'name_ru', m.home_team.name), "away": getattr(m.away_team, 'name_ru', m.away_team.name), "score": f"{m.home_goals}:{m.away_goals}"} for m in h2h_raw]
+            # --- ОБНОВЛЕННЫЙ БЛОК H2H (с лого и ID) ---
+            h2h_raw = session.query(Match).filter(
+                or_(
+                    and_(Match.home_team_id == match.home_team_id, Match.away_team_id == match.away_team_id),
+                    and_(Match.home_team_id == match.away_team_id, Match.away_team_id == match.home_team_id)
+                ), 
+                Match.status == 'FINISHED', 
+                Match.date < match.date
+            ).order_by(Match.date.desc()).limit(5).all()
+
+            data["h2h"] = [{
+                "date": m.date.strftime('%d.%m.%y'),
+                "home": m.home_team.name_ru or m.home_team.name,
+                "home_logo": m.home_team.logo_url,
+                "home_id": m.home_team_id,
+                "away": m.away_team.name_ru or m.away_team.name,
+                "away_logo": m.away_team.logo_url,
+                "away_id": m.away_team_id,
+                "score": f"{m.home_goals}:{m.away_goals}"
+            } for m in h2h_raw]
 
         return data
 
@@ -131,18 +160,44 @@ class MatchService:
             t2_l = session.query(Match).filter(or_(Match.home_team_id == t2.id, Match.away_team_id == t2.id), Match.status == 'FINISHED').order_by(Match.date.desc()).first()
             t1_e = self._safe_float(getattr(t1_l, 'home_elo' if t1_l and t1_l.home_team_id == t1.id else 'away_elo', 1500), 1500)
             t2_e = self._safe_float(getattr(t2_l, 'home_elo' if t2_l and t2_l.home_team_id == t2.id else 'away_elo', 1500), 1500)
-            h2h = session.query(Match).filter(or_(and_(Match.home_team_id == t1.id, Match.away_team_id == t2.id), and_(Match.home_team_id == t2.id, Match.away_team_id == t1.id)), Match.status == 'FINISHED', Match.date < now).order_by(Match.date.desc()).limit(5).all()
+            
+            # --- ОБНОВЛЕННЫЙ БЛОК H2H В COMPARISON (с лого и ID) ---
+            h2h = session.query(Match).filter(
+                or_(
+                    and_(Match.home_team_id == t1.id, Match.away_team_id == t2.id), 
+                    and_(Match.home_team_id == t2.id, Match.away_team_id == t1.id)
+                ), 
+                Match.status == 'FINISHED', 
+                Match.date < now
+            ).order_by(Match.date.desc()).limit(5).all()
+            
             return {
-                "team1": {"name": t1.name_ru or t1.name, "logo_url": t1.logo_url, "elo": t1_e, "stats": h_d["stats"], "history": h_d["history"]},
-                "team2": {"name": t2.name_ru or t2.name, "logo_url": t2.logo_url, "elo": t2_e, "stats": a_d["stats"], "history": a_d["history"]},
-                "h2h": [{"date": m.date.strftime('%d.%m.%y'), "home": m.home_team.name_ru or m.home_team.name, "away": m.away_team.name_ru or m.away_team.name, "score": f"{m.home_goals}:{m.away_goals}"} for m in h2h] ,
+                "team1": {
+                    "id": t1.id,
+                    "name": t1.name_ru or t1.name, 
+                    "logo_url": t1.logo_url, 
+                    "elo": t1_e, 
+                    "stats": h_d["stats"], 
+                    "history": h_d["history"]
+                },
+                "team2": {
+                    "id": t2.id,
+                    "name": t2.name_ru or t2.name, 
+                    "logo_url": t2.logo_url, 
+                    "elo": t2_e, 
+                    "stats": a_d["stats"], 
+                    "history": a_d["history"]
+                },
+                "h2h": [{
+                    "date": m.date.strftime('%d.%m.%y'), 
+                    "home": m.home_team.name_ru or m.home_team.name, 
+                    "home_logo": m.home_team.logo_url,
+                    "home_id": m.home_team_id,
+                    "away": m.away_team.name_ru or m.away_team.name, 
+                    "away_logo": m.away_team.logo_url,
+                    "away_id": m.away_team_id,
+                    "score": f"{m.home_goals}:{m.away_goals}"
+                } for m in h2h] ,
                 "prediction": self.inference.predict(h_d["stats"], a_d["stats"], t1_e, t2_e)
             }
         finally: session.close()
-
-    def get_league_table(self, ln):
-        m = {"Premier_League": "EPL", "La_Liga": "La_Liga", "Serie_A": "Serie_A", "Bundesliga": "Bundesliga", "Ligue_1": "Ligue_1"}
-        try:
-            us = sd.Understat(leagues=m.get(ln, ln), seasons='2425')
-            return us.read_leaguetable().reset_index().to_dict(orient='records')
-        except: return []

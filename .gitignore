@@ -1,2 +1,4 @@
 .env
 rules.txt
+venv/
+node_modules/

@@ -2,6 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "homepage": "https://MrDeys.github.io/GraduateWork",
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.6.3",
@@ -17,7 +18,9 @@
   "scripts": {
     "start": "craco  start",
     "build": "craco  build",
-    "test": "craco  test"
+    "test": "craco  test",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
@@ -42,6 +45,7 @@
     "ajv": "^8.20.0",
     "ajv-keywords": "^5.1.0",
     "autoprefixer": "^10.5.0",
+    "gh-pages": "^6.3.0",
     "postcss": "^8.5.12",
     "tailwindcss": "^3.4.19"
   }

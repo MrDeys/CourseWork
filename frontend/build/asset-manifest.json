@@ -1,0 +1,18 @@
+{
+  "files": {
+    "main.css": "/GraduateWork/static/css/main.6e47f607.css",
+    "main.js": "/GraduateWork/static/js/main.b18f85e5.js",
+    "static/media/premier-league.png": "/GraduateWork/static/media/premier-league.5b513dea27e4a4ae6d13.png",
+    "static/media/serie-a.png": "/GraduateWork/static/media/serie-a.ca4113c7e1cd0349a28a.png",
+    "static/media/ligue-1.png": "/GraduateWork/static/media/ligue-1.80b73e71fd420f592ad7.png",
+    "static/media/bundesliga.png": "/GraduateWork/static/media/bundesliga.8228c769933460106d62.png",
+    "static/media/la-liga.png": "/GraduateWork/static/media/la-liga.cfea20e32e1a8775354f.png",
+    "index.html": "/GraduateWork/index.html",
+    "main.6e47f607.css.map": "/GraduateWork/static/css/main.6e47f607.css.map",
+    "main.b18f85e5.js.map": "/GraduateWork/static/js/main.b18f85e5.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.6e47f607.css",
+    "static/js/main.b18f85e5.js"
+  ]
+}

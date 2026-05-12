@@ -1,20 +1,14 @@
-import sys
 import os
+from src.app import create_app
+from update import run_full_update 
+import threading
 
-try:
-    from src.app import create_app
-    app = create_app()
-    print("✅ Flask app created successfully")
-except Exception as e:
-    print(f"❌ CRITICAL ERROR DURING APP CREATION: {e}")
-    import traceback
-    traceback.print_exc()
-    sys.exit(1)
+app = create_app()
 
-@app.route('/')
-def health():
-    return "NeuroPredict API is running", 200
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+if __name__ == '__main__':
+    # Запускаем обновление в фоне при старте локально
+    update_thread = threading.Thread(target=run_full_update)
+    update_thread.start()
+    
+    # Порт 5000 для локального Docker
+    app.run(host='0.0.0.0', port=5000)

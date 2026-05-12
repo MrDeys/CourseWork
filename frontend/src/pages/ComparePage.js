@@ -3,13 +3,45 @@ import { getMatches, getTeamComparison } from "../api";
 
 // --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
 
-const getH2HScoreStyle = (score) => {
-  const [h, a] = score.split(":").map(Number);
-  if (h > a)
-    return "bg-green-600 text-white shadow-[0_0_15px_rgba(22,163,74,0.4)]";
-  if (h < a)
-    return "bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]";
-  return "bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.4)]";
+const ResultCircle = ({ res }) => {
+  const colors = { W: "bg-green-500", D: "bg-yellow-500", L: "bg-red-600" };
+  return (
+    <span
+      className={`${colors[res]} w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow-lg`}
+    >
+      {res}
+    </span>
+  );
+};
+
+const StatBar = ({ label, h, a, reverse, color }) => {
+  const isHomeBetter = reverse ? h < a : h > a;
+  const total = (parseFloat(h) || 0) + (parseFloat(a) || 0) || 1;
+  return (
+    <div className="relative group">
+      <div className="flex justify-between items-end mb-2">
+        <span className="text-3xl font-black text-white">
+          {(parseFloat(h) || 0).toFixed(2)}
+        </span>
+        <span className="text-[10px] font-black text-white uppercase tracking-widest mb-2 opacity-60 text-center">
+          {label}
+        </span>
+        <span className="text-3xl font-black text-white">
+          {(parseFloat(a) || 0).toFixed(2)}
+        </span>
+      </div>
+      <div className="h-3 w-full bg-gray-800 rounded-full flex overflow-hidden p-0.5 border border-gray-700">
+        <div
+          className={`h-full rounded-full transition-all duration-1000 ${isHomeBetter ? color : "bg-gray-600"}`}
+          style={{ width: `${((parseFloat(h) || 0) / total) * 100}%` }}
+        ></div>
+        <div
+          className={`h-full rounded-full transition-all duration-1000 ${!isHomeBetter ? color : "bg-gray-600"}`}
+          style={{ width: `${((parseFloat(a) || 0) / total) * 100}%` }}
+        ></div>
+      </div>
+    </div>
+  );
 };
 
 const HistoryList = ({ title, matches }) => (
@@ -60,45 +92,23 @@ const HistoryList = ({ title, matches }) => (
   </div>
 );
 
-const ResultCircle = ({ res }) => {
-  const colors = { W: "bg-green-500", D: "bg-yellow-500", L: "bg-red-600" };
-  return (
-    <span
-      className={`${colors[res]} w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow-lg`}
-    >
-      {res}
-    </span>
-  );
-};
+// --- ЛОГИКА ЦВЕТА H2H (ОТНОСИТЕЛЬНО ПЕРВОЙ ВЫБРАННОЙ КОМАНДЫ) ---
+const getH2HResultStyle = (score, pastHomeId, focusTeamId) => {
+  const [homeG, awayG] = score.split(":").map(Number);
+  if (homeG === awayG)
+    return "bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.3)]";
 
-const StatBar = ({ label, h, a, reverse, color }) => {
-  const isHomeBetter = reverse ? h < a : h > a;
-  const total = (parseFloat(h) || 0) + (parseFloat(a) || 0) || 1;
-  return (
-    <div className="relative group">
-      <div className="flex justify-between items-end mb-2">
-        <span className="text-3xl font-black text-white">
-          {(parseFloat(h) || 0).toFixed(2)}
-        </span>
-        <span className="text-[10px] font-black text-white uppercase tracking-widest mb-2 opacity-60 text-center">
-          {label}
-        </span>
-        <span className="text-3xl font-black text-white">
-          {(parseFloat(a) || 0).toFixed(2)}
-        </span>
-      </div>
-      <div className="h-3 w-full bg-gray-800 rounded-full flex overflow-hidden p-0.5 border border-gray-700">
-        <div
-          className={`h-full rounded-full transition-all duration-1000 ${isHomeBetter ? color : "bg-gray-600"}`}
-          style={{ width: `${((parseFloat(h) || 0) / total) * 100}%` }}
-        ></div>
-        <div
-          className={`h-full rounded-full transition-all duration-1000 ${!isHomeBetter ? color : "bg-gray-600"}`}
-          style={{ width: `${((parseFloat(a) || 0) / total) * 100}%` }}
-        ></div>
-      </div>
-    </div>
-  );
+  const isFocusTeamHomeInPast = pastHomeId === focusTeamId;
+
+  if (isFocusTeamHomeInPast) {
+    return homeG > awayG
+      ? "bg-green-600 text-white shadow-[0_0_15px_rgba(22,163,74,0.4)]"
+      : "bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]";
+  } else {
+    return awayG > homeG
+      ? "bg-green-600 text-white shadow-[0_0_15px_rgba(22,163,74,0.4)]"
+      : "bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]";
+  }
 };
 
 // --- ОСНОВНОЙ КОМПОНЕНТ ---
@@ -211,7 +221,7 @@ function ComparePage() {
                 )
               }
               onKeyDown={(e) => e.key === "Enter" && input2Ref.current.focus()}
-              autoComplete="one-time-code"
+              autoComplete="off"
               placeholder="Первая команда..."
               className="w-full bg-gray-950 border border-gray-800 rounded-2xl py-6 px-8 text-xl text-white focus:outline-none focus:border-red-600 transition-all font-black uppercase tracking-tight"
             />
@@ -257,7 +267,7 @@ function ComparePage() {
                 )
               }
               onKeyDown={(e) => e.key === "Enter" && handleCompare()}
-              autoComplete="one-time-code"
+              autoComplete="off"
               placeholder="Вторая команда..."
               className="w-full bg-gray-950 border border-gray-800 rounded-2xl py-6 px-8 text-xl text-white focus:outline-none focus:border-red-600 transition-all font-black uppercase tracking-tight"
             />
@@ -408,7 +418,7 @@ function ComparePage() {
                   </div>
                   <div className="h-6 w-full bg-gray-800 rounded-full overflow-hidden flex p-1 border border-gray-700 shadow-inner">
                     <div
-                      className="bg-red-600 h-full rounded-l-full shadow-[0_0_15px_rgba(220,38,38,0.5)]"
+                      className="bg-red-600 h-full rounded-l-full"
                       style={{
                         width: `${comparisonData.prediction.total_over_2_5}%`,
                       }}
@@ -496,7 +506,7 @@ function ComparePage() {
             />
           </div>
 
-          {/* ЛИЧНЫЕ ВСТРЕЧИ (НОВЫЙ БЛОК) */}
+          {/* ЛИЧНЫЕ ВСТРЕЧИ (ОБНОВЛЕННЫЙ БЛОК) */}
           <div className="bg-gray-900/60 p-8 md:p-12 rounded-[40px] border border-red-600/20 shadow-2xl">
             <h3 className="text-xs font-black text-red-600 uppercase tracking-[0.5em] mb-10 text-center">
               Очные встречи (H2H - Last 5)
@@ -508,22 +518,41 @@ function ComparePage() {
                     key={i}
                     className="flex items-center justify-between bg-black/40 p-6 rounded-3xl border border-white/5 transition-all hover:border-white/10"
                   >
-                    <span className="flex-1 text-right text-base md:text-lg font-black text-white uppercase truncate px-2">
-                      {m.home}
-                    </span>
+                    {/* Левая команда */}
+                    <div className="flex-1 flex items-center justify-end gap-4 min-w-0">
+                      <span className="text-base md:text-lg font-black text-white uppercase truncate text-right">
+                        {m.home}
+                      </span>
+                      <img
+                        src={m.home_logo}
+                        alt=""
+                        className="w-9 h-9 object-contain flex-shrink-0"
+                      />
+                    </div>
+
+                    {/* Центр */}
                     <div className="flex flex-col items-center gap-2 mx-8 min-w-[120px]">
-                      <span className="text-[11px] font-black text-white uppercase tracking-[0.2em]">
+                      <span className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em]">
                         {m.date}
                       </span>
                       <div
-                        className={`px-6 py-2 rounded-xl text-2xl font-black italic tracking-tighter font-mono ${getH2HScoreStyle(m.score)}`}
+                        className={`px-6 py-2 rounded-xl text-2xl font-black italic tracking-tighter font-mono ${getH2HResultStyle(m.score, m.home_id, comparisonData.team1.id)}`}
                       >
                         {m.score}
                       </div>
                     </div>
-                    <span className="flex-1 text-left text-base md:text-lg font-black text-white uppercase truncate px-2">
-                      {m.away}
-                    </span>
+
+                    {/* Правая команда */}
+                    <div className="flex-1 flex items-center justify-start gap-4 min-w-0">
+                      <img
+                        src={m.away_logo}
+                        alt=""
+                        className="w-9 h-9 object-contain flex-shrink-0"
+                      />
+                      <span className="text-base md:text-lg font-black text-white uppercase truncate text-left">
+                        {m.away}
+                      </span>
+                    </div>
                   </div>
                 ))
               ) : (
