@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NeuroPredict</string>
+    <string name="title_activity_main">NeuroPredict</string>
+    <string name="package_name">com.neuropredict.app</string>
+    <string name="custom_url_scheme">com.neuropredict.app</string>
+</resources>

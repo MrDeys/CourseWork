@@ -45,8 +45,9 @@ const StatBar = ({ label, h, a, reverse, color }) => {
   );
 };
 
+// --- КОМПОНЕНТ ИСТОРИИ (С ПРЯТАНЬЕМ ТЕКСТА НА МОБИЛКЕ) ---
 const HistoryList = ({ title, matches }) => (
-  <div className="bg-gray-800/40 p-8 rounded-[32px] border border-white/5 h-full shadow-xl">
+  <div className="bg-gray-800/40 p-6 md:p-8 rounded-[32px] border border-white/5 h-full shadow-xl">
     <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-8 text-center">
       {title}
     </h3>
@@ -54,29 +55,30 @@ const HistoryList = ({ title, matches }) => (
       {matches?.map((m, i) => (
         <div
           key={i}
-          className="flex items-center justify-between gap-4 bg-black/20 p-5 rounded-2xl border border-white/5"
+          className="flex items-center justify-between gap-3 bg-black/20 p-4 md:p-5 rounded-2xl border border-white/5"
         >
           <div
-            className={`text-[10px] font-black px-3 py-1 rounded-lg border ${m.is_home ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-purple-500/10 text-purple-400 border-purple-500/20"}`}
+            className={`text-[9px] font-black px-2 py-1 rounded-lg border flex-shrink-0 ${m.is_home ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-purple-500/10 text-purple-400 border-purple-500/20"}`}
           >
             {m.is_home ? "ДОМА" : "ГОСТИ"}
           </div>
-          <div className="flex items-center gap-4 flex-grow min-w-0">
+          <div className="flex items-center gap-3 flex-grow min-w-0">
             <img
               src={m.opponent_logo}
               alt=""
-              className="w-9 h-9 object-contain"
+              className="w-8 h-8 md:w-9 md:h-9 object-contain flex-shrink-0"
             />
-            <span className="text-base font-black text-white truncate">
+            {/* ТЕКСТ: Скрыт на мобилке, виден на MD+ */}
+            <span className="text-sm md:text-base font-black text-white truncate hidden md:block">
               {m.opponent}
             </span>
           </div>
-          <div className="flex items-center gap-5">
-            <span className="text-lg font-black text-white font-mono italic">
+          <div className="flex items-center gap-3 md:gap-5 flex-shrink-0">
+            <span className="text-base md:text-lg font-black text-white font-mono italic">
               {m.score}
             </span>
             <span
-              className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shadow-lg ${m.res === "W" ? "bg-green-500 text-white" : m.res === "L" ? "bg-red-600 text-white" : "bg-yellow-500 text-black"}`}
+              className={`w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center text-[10px] md:text-xs font-black shadow-lg ${m.res === "W" ? "bg-green-500 text-white" : m.res === "L" ? "bg-red-600 text-white" : "bg-yellow-500 text-black"}`}
             >
               {m.res}
             </span>
@@ -90,11 +92,9 @@ const HistoryList = ({ title, matches }) => (
 // --- ЛОГИКА ЦВЕТА H2H (ОТНОСИТЕЛЬНО ТЕКУЩЕГО ХОЗЯИНА) ---
 const getH2HResultStyle = (score, pastHomeId, currentHomeId) => {
   const [homeG, awayG] = score.split(":").map(Number);
-
   if (homeG === awayG)
     return "bg-yellow-500 text-black shadow-[0_0_15px_rgba(234,179,8,0.3)]";
 
-  // Проверяем: был ли текущий хозяин "хозяином" в прошлом матче
   const wasCurrentHomeTeamHomeInPast = pastHomeId === currentHomeId;
 
   if (wasCurrentHomeTeamHomeInPast) {
@@ -102,20 +102,19 @@ const getH2HResultStyle = (score, pastHomeId, currentHomeId) => {
       ? "bg-green-600 text-white shadow-[0_0_15px_rgba(22,163,74,0.4)]"
       : "bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]";
   } else {
-    // Если в прошлом текущий хозяин был в гостях
     return awayG > homeG
       ? "bg-green-600 text-white shadow-[0_0_15px_rgba(22,163,74,0.4)]"
       : "bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]";
   }
 };
 
-// --- ОСНОВНАЯ СТРАНИЦА ---
 function MatchDetailPage() {
   const { matchId } = useParams();
   const [match, setMatch] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const fetchData = async () => {
       setLoading(true);
       const data = await getMatchId(matchId);
@@ -170,19 +169,19 @@ function MatchDetailPage() {
           </div>
         </div>
 
-        <div className="my-10 md:my-0 text-center flex flex-col items-center justify-center min-w-[200px]">
+        <div className="my-10 md:my-0 text-center flex flex-col items-center justify-center min-w-[150px]">
           {match.status === "FINISHED" ? (
             <div className="flex flex-col items-center">
               <span className="text-[10px] font-black text-yellow-500 uppercase tracking-[0.3em] mb-3">
                 Завершено
               </span>
-              <div className="text-5xl md:text-6xl font-black text-white bg-white/5 px-8 py-4 rounded-[32px] border border-white/10 shadow-2xl tracking-tighter italic whitespace-nowrap">
+              <div className="text-5xl md:text-6xl font-black text-white bg-white/5 px-8 py-4 rounded-[32px] border border-white/10 shadow-2xl tracking-tighter italic">
                 {match.score.home} : {match.score.away}
               </div>
             </div>
           ) : (
             <>
-              <span className="text-6xl font-black text-white opacity-10 italic mb-4 uppercase">
+              <span className="text-6xl font-black text-white opacity-10 italic mb-4">
                 VS
               </span>
               <div className="text-sm font-bold text-white tracking-widest uppercase mb-1">
@@ -246,7 +245,7 @@ function MatchDetailPage() {
                 ></div>
               </div>
             </div>
-            <div className="flex flex-col items-center justify-center p-6 bg-gray-800/30 rounded-3xl border border-gray-800 text-center shadow-inner">
+            <div className="flex flex-col items-center justify-center p-6 bg-gray-800/30 rounded-3xl border border-gray-800 text-center">
               <span
                 className={`text-xl font-black uppercase mb-3 ${predStyle.color}`}
               >
@@ -348,58 +347,58 @@ function MatchDetailPage() {
       {/* 4. ИСТОРИЯ ПОСЛЕДНИХ ИГР */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <HistoryList
-          title={`Последние игры: ${match.homeTeam.name_ru || match.homeTeam.name}`}
+          title={`История: ${match.homeTeam.name_ru || match.homeTeam.name}`}
           matches={match.homeTeam.history}
         />
         <HistoryList
-          title={`Последние игры: ${match.awayTeam.name_ru || match.awayTeam.name}`}
+          title={`История: ${match.awayTeam.name_ru || match.awayTeam.name}`}
           matches={match.awayTeam.history}
         />
       </div>
 
       {/* 5. ОЧНЫЕ ВСТРЕЧИ (H2H) */}
-      <div className="bg-gray-900/60 p-8 md:p-12 rounded-[40px] border border-red-600/20 shadow-2xl">
+      <div className="bg-gray-900/60 p-6 md:p-12 rounded-[40px] border border-red-600/20 shadow-2xl">
         <h3 className="text-xs font-black text-red-600 uppercase tracking-[0.5em] mb-10 text-center">
-          Очные встречи (H2H)
+          Очные встречи
         </h3>
         <div className="space-y-4">
           {match.h2h?.map((m, i) => (
             <div
               key={i}
-              className="flex items-center justify-between bg-black/40 p-5 rounded-2xl border border-white/5 transition-all hover:border-white/10"
+              className="flex items-center justify-between bg-black/40 p-4 md:p-5 rounded-2xl border border-white/5 transition-all hover:border-white/10"
             >
-              {/* Левая команда */}
-              <div className="flex-1 flex items-center justify-end gap-4 min-w-0">
-                <span className="text-base font-black uppercase truncate text-white">
+              {/* Левая команда: Название скрыто на мобилке */}
+              <div className="flex-1 flex items-center justify-end gap-3 min-w-0">
+                <span className="text-sm md:text-base font-black uppercase truncate text-white hidden md:block text-right">
                   {m.home}
                 </span>
                 <img
                   src={m.home_logo}
                   alt=""
-                  className="w-8 h-8 object-contain flex-shrink-0"
+                  className="w-8 h-8 md:w-9 md:h-9 object-contain flex-shrink-0"
                 />
               </div>
 
               {/* Центр: Дата и Счет */}
-              <div className="flex flex-col items-center gap-1 mx-4 md:mx-10 min-w-[110px]">
-                <span className="text-[10px] font-black text-white/40 uppercase">
+              <div className="flex flex-col items-center gap-1 mx-3 md:mx-10 min-w-[90px] md:min-w-[110px]">
+                <span className="text-[9px] md:text-[10px] font-black text-white/40 uppercase">
                   {m.date}
                 </span>
                 <div
-                  className={`px-5 py-1.5 rounded-xl text-xl font-black italic tracking-tighter ${getH2HResultStyle(m.score, m.home_id, match.homeTeam.id)}`}
+                  className={`px-4 py-1.5 md:px-5 md:py-1.5 rounded-xl text-lg md:text-xl font-black italic tracking-tighter ${getH2HResultStyle(m.score, m.home_id, match.homeTeam.id)}`}
                 >
                   {m.score}
                 </div>
               </div>
 
-              {/* Правая команда */}
-              <div className="flex-1 flex items-center justify-start gap-4 min-w-0">
+              {/* Правая команда: Название скрыто на мобилке */}
+              <div className="flex-1 flex items-center justify-start gap-3 min-w-0">
                 <img
                   src={m.away_logo}
                   alt=""
-                  className="w-8 h-8 object-contain flex-shrink-0"
+                  className="w-8 h-8 md:w-9 md:h-9 object-contain flex-shrink-0"
                 />
-                <span className="text-base font-black uppercase truncate text-white">
+                <span className="text-sm md:text-base font-black uppercase truncate text-white hidden md:block text-left">
                   {m.away}
                 </span>
               </div>

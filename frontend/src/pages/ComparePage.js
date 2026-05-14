@@ -44,8 +44,9 @@ const StatBar = ({ label, h, a, reverse, color }) => {
   );
 };
 
+// --- КОМПОНЕНТ ИСТОРИИ (С ПРЯТАНЬЕМ ТЕКСТА НА МОБИЛКЕ) ---
 const HistoryList = ({ title, matches }) => (
-  <div className="bg-gray-800/40 p-8 rounded-[32px] border border-white/5 h-full shadow-xl">
+  <div className="bg-gray-800/40 p-6 md:p-8 rounded-[32px] border border-white/5 h-full shadow-xl">
     <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-8 text-center">
       {title}
     </h3>
@@ -54,29 +55,30 @@ const HistoryList = ({ title, matches }) => (
         matches.map((m, i) => (
           <div
             key={i}
-            className="flex items-center justify-between gap-4 bg-black/20 p-5 rounded-2xl border border-white/5"
+            className="flex items-center justify-between gap-3 bg-black/20 p-4 md:p-5 rounded-2xl border border-white/5"
           >
             <div
-              className={`text-[10px] font-black px-3 py-1 rounded-lg border ${m.is_home ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-purple-500/10 text-purple-400 border-purple-500/20"}`}
+              className={`text-[9px] font-black px-2 py-1 rounded-lg border flex-shrink-0 ${m.is_home ? "bg-blue-500/10 text-blue-400 border-blue-500/20" : "bg-purple-500/10 text-purple-400 border-purple-500/20"}`}
             >
               {m.is_home ? "ДОМА" : "ГОСТИ"}
             </div>
-            <div className="flex items-center gap-4 flex-grow min-w-0">
+            <div className="flex items-center gap-3 flex-grow min-w-0">
               <img
                 src={m.opponent_logo}
                 alt=""
-                className="w-9 h-9 object-contain"
+                className="w-8 h-8 md:w-9 md:h-9 object-contain flex-shrink-0"
               />
-              <span className="text-base font-black text-white truncate">
+              {/* Скрываем название на мобилке */}
+              <span className="text-sm md:text-base font-black text-white truncate hidden md:block">
                 {m.opponent}
               </span>
             </div>
-            <div className="flex items-center gap-5">
-              <span className="text-lg font-black text-white font-mono italic">
+            <div className="flex items-center gap-3 md:gap-5 flex-shrink-0">
+              <span className="text-base md:text-lg font-black text-white font-mono italic">
                 {m.score}
               </span>
               <span
-                className={`w-9 h-9 rounded-xl flex items-center justify-center text-xs font-black shadow-lg ${m.res === "W" ? "bg-green-500 text-white" : m.res === "L" ? "bg-red-600 text-white" : "bg-yellow-500 text-black"}`}
+                className={`w-8 h-8 md:w-9 md:h-9 rounded-xl flex items-center justify-center text-[10px] md:text-xs font-black shadow-lg ${m.res === "W" ? "bg-green-500 text-white" : m.res === "L" ? "bg-red-600 text-white" : "bg-yellow-500 text-black"}`}
               >
                 {m.res}
               </span>
@@ -92,7 +94,6 @@ const HistoryList = ({ title, matches }) => (
   </div>
 );
 
-// --- ЛОГИКА ЦВЕТА H2H (ОТНОСИТЕЛЬНО ПЕРВОЙ ВЫБРАННОЙ КОМАНДЫ) ---
 const getH2HResultStyle = (score, pastHomeId, focusTeamId) => {
   const [homeG, awayG] = score.split(":").map(Number);
   if (homeG === awayG)
@@ -110,8 +111,6 @@ const getH2HResultStyle = (score, pastHomeId, focusTeamId) => {
       : "bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]";
   }
 };
-
-// --- ОСНОВНОЙ КОМПОНЕНТ ---
 
 function ComparePage() {
   const [allTeams, setAllTeams] = useState([]);
@@ -131,6 +130,7 @@ function ComparePage() {
   const container2Ref = useRef(null);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     const fetchTeams = async () => {
       try {
         const data = await getMatches(null);
@@ -195,11 +195,26 @@ function ComparePage() {
     }
   };
 
-  const selectSuggestion = (teamObj, setTeam, setShow, nextRef = null) => {
-    setTeam(teamObj.name);
-    setShow(false);
-    if (nextRef) nextRef.current.focus();
-    else handleCompare(team1, teamObj.name);
+  const selectSuggestion = (teamObj, isSecondInput) => {
+    if (isSecondInput) {
+      setTeam2(teamObj.name);
+      setShowSugg2(false);
+      // Если первая команда еще не выбрана — перекидываем фокус на неё
+      if (!team1) {
+        input1Ref.current.focus();
+      } else {
+        handleCompare(team1, teamObj.name);
+      }
+    } else {
+      setTeam1(teamObj.name);
+      setShowSugg1(false);
+      // Если вторая команда еще не выбрана — перекидываем фокус на неё
+      if (!team2) {
+        input2Ref.current.focus();
+      } else {
+        handleCompare(teamObj.name, team2);
+      }
+    }
   };
 
   return (
@@ -207,6 +222,7 @@ function ComparePage() {
       {/* 1. ПАНЕЛЬ ВЫБОРА КОМАНД */}
       <div className="bg-gray-900 p-8 rounded-[40px] border border-gray-800 shadow-2xl mb-12">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* ИНПУТ 1 (ХОЗЯЕВА) */}
           <div className="w-full md:w-2/5 relative" ref={container1Ref}>
             <input
               ref={input1Ref}
@@ -220,9 +236,14 @@ function ComparePage() {
                   setShowSugg1,
                 )
               }
-              onKeyDown={(e) => e.key === "Enter" && input2Ref.current.focus()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (!team2) input2Ref.current.focus();
+                  else handleCompare();
+                }
+              }}
               autoComplete="off"
-              placeholder="Первая команда..."
+              placeholder="Команда хозяев..."
               className="w-full bg-gray-950 border border-gray-800 rounded-2xl py-6 px-8 text-xl text-white focus:outline-none focus:border-red-600 transition-all font-black uppercase tracking-tight"
             />
             {showSugg1 && suggestions1.length > 0 && (
@@ -230,9 +251,7 @@ function ComparePage() {
                 {suggestions1.map((s, i) => (
                   <li
                     key={i}
-                    onClick={() =>
-                      selectSuggestion(s, setTeam1, setShowSugg1, input2Ref)
-                    }
+                    onClick={() => selectSuggestion(s, false)}
                     className="flex items-center gap-5 px-6 py-5 hover:bg-red-600 cursor-pointer transition-all border-b border-gray-900 last:border-0 group"
                   >
                     <img
@@ -249,10 +268,16 @@ function ComparePage() {
             )}
           </div>
 
-          <div className="flex-shrink-0 w-16 h-16 bg-red-600 rounded-full flex items-center justify-center border-4 border-gray-900 text-white font-black italic shadow-xl z-10 uppercase">
-            VS
-          </div>
+          {/* КНОПКА VS (Запуск анализа) */}
+          <button
+            onClick={() => handleCompare()}
+            title="Сравнить команды"
+            className="flex-shrink-0 w-16 h-16 bg-red-600 rounded-full flex items-center justify-center border-4 border-gray-900 text-white font-black italic shadow-xl z-10 uppercase hover:scale-110 active:scale-95 transition-all cursor-pointer group"
+          >
+            <span className="group-hover:animate-pulse">VS</span>
+          </button>
 
+          {/* ИНПУТ 2 (ГОСТИ) */}
           <div className="w-full md:w-2/5 relative" ref={container2Ref}>
             <input
               ref={input2Ref}
@@ -266,9 +291,14 @@ function ComparePage() {
                   setShowSugg2,
                 )
               }
-              onKeyDown={(e) => e.key === "Enter" && handleCompare()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  if (!team1) input1Ref.current.focus();
+                  else handleCompare();
+                }
+              }}
               autoComplete="off"
-              placeholder="Вторая команда..."
+              placeholder="Команда гостей..."
               className="w-full bg-gray-950 border border-gray-800 rounded-2xl py-6 px-8 text-xl text-white focus:outline-none focus:border-red-600 transition-all font-black uppercase tracking-tight"
             />
             {showSugg2 && suggestions2.length > 0 && (
@@ -276,7 +306,7 @@ function ComparePage() {
                 {suggestions2.map((s, i) => (
                   <li
                     key={i}
-                    onClick={() => selectSuggestion(s, setTeam2, setShowSugg2)}
+                    onClick={() => selectSuggestion(s, true)}
                     className="flex items-center gap-5 px-6 py-5 hover:bg-red-600 cursor-pointer transition-all border-b border-gray-900 last:border-0 group"
                   >
                     <img
@@ -506,50 +536,50 @@ function ComparePage() {
             />
           </div>
 
-          {/* ЛИЧНЫЕ ВСТРЕЧИ (ОБНОВЛЕННЫЙ БЛОК) */}
-          <div className="bg-gray-900/60 p-8 md:p-12 rounded-[40px] border border-red-600/20 shadow-2xl">
+          {/* ЛИЧНЫЕ ВСТРЕЧИ (H2H - ОБНОВЛЕНО ДЛЯ МОБИЛОК) */}
+          <div className="bg-gray-900/60 p-6 md:p-12 rounded-[40px] border border-red-600/20 shadow-2xl">
             <h3 className="text-xs font-black text-red-600 uppercase tracking-[0.5em] mb-10 text-center">
-              Очные встречи (H2H - Last 5)
+              Очные встречи
             </h3>
-            <div className="space-y-6">
+            <div className="space-y-4 md:space-y-6">
               {comparisonData.h2h && comparisonData.h2h.length > 0 ? (
                 comparisonData.h2h.map((m, i) => (
                   <div
                     key={i}
-                    className="flex items-center justify-between bg-black/40 p-6 rounded-3xl border border-white/5 transition-all hover:border-white/10"
+                    className="flex items-center justify-between bg-black/40 p-4 md:p-6 rounded-3xl border border-white/5 transition-all hover:border-white/10"
                   >
                     {/* Левая команда */}
-                    <div className="flex-1 flex items-center justify-end gap-4 min-w-0">
-                      <span className="text-base md:text-lg font-black text-white uppercase truncate text-right">
+                    <div className="flex-1 flex items-center justify-end gap-3 min-w-0">
+                      <span className="text-sm md:text-lg font-black text-white uppercase truncate text-right hidden md:block">
                         {m.home}
                       </span>
                       <img
                         src={m.home_logo}
                         alt=""
-                        className="w-9 h-9 object-contain flex-shrink-0"
+                        className="w-8 h-8 md:w-9 md:h-9 object-contain flex-shrink-0"
                       />
                     </div>
 
                     {/* Центр */}
-                    <div className="flex flex-col items-center gap-2 mx-8 min-w-[120px]">
-                      <span className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em]">
+                    <div className="flex flex-col items-center gap-1 mx-3 md:mx-8 min-w-[90px] md:min-w-[120px]">
+                      <span className="text-[9px] md:text-[11px] font-black text-white/40 uppercase tracking-[0.2em]">
                         {m.date}
                       </span>
                       <div
-                        className={`px-6 py-2 rounded-xl text-2xl font-black italic tracking-tighter font-mono ${getH2HResultStyle(m.score, m.home_id, comparisonData.team1.id)}`}
+                        className={`px-4 py-1.5 md:px-6 md:py-2 rounded-xl text-lg md:text-2xl font-black italic tracking-tighter font-mono ${getH2HResultStyle(m.score, m.home_id, comparisonData.team1.id)}`}
                       >
                         {m.score}
                       </div>
                     </div>
 
                     {/* Правая команда */}
-                    <div className="flex-1 flex items-center justify-start gap-4 min-w-0">
+                    <div className="flex-1 flex items-center justify-start gap-3 min-w-0">
                       <img
                         src={m.away_logo}
                         alt=""
-                        className="w-9 h-9 object-contain flex-shrink-0"
+                        className="w-8 h-8 md:w-9 md:h-9 object-contain flex-shrink-0"
                       />
-                      <span className="text-base md:text-lg font-black text-white uppercase truncate text-left">
+                      <span className="text-sm md:text-lg font-black text-white uppercase truncate text-left hidden md:block">
                         {m.away}
                       </span>
                     </div>

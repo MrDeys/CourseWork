@@ -1,15 +1,14 @@
 import axios from "axios";
 
-// 1. Указываем адрес бэкенда (изменится при перезапуске туннеля)
-//const API_BASE_URL = "http://localhost:5000/api";
-const API_BASE_URL = "https://nice-falcons-follow.loca.lt/api";
+//const API_BASE_URL = "/api";
+const API_BASE_URL = "http://192.168.3.22:5000/api";
+//const API_BASE_URL = "https://my-neuro-diploma-777.loca.lt/api";
 
 // 2. Создаем специальный экземпляр axios с настройками для туннеля
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
-    "Bypass-Tunnel-Reminder": "true", // Магия для пропуска синей страницы Localtunnel
-    "Content-Type": "application/json",
+    "Bypass-Tunnel-Reminder": "true",
   },
 });
 

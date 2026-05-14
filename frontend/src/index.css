@@ -2,22 +2,70 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 1. Базовые настройки для всей страницы */
+html {
+  /* Важно: не фиксируем высоту жестко, даем контенту расти */
+  width: 100%;
+  /* Убираем горизонтальный сдвиг */
+  overflow-x: hidden;
+  /* Убираем синее выделение при нажатии на ссылки в Android */
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   background-color: theme("colors.color-bg");
   color: theme("colors.color-text-white");
   @apply antialiased;
   font-family: "Segoe UI", sans-serif;
+
+  /* Нативный вертикальный скролл */
+  overflow-y: auto;
+  overflow-x: hidden;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+
+  /* Эффект инерции (плавности) для мобилок */
+  -webkit-overflow-scrolling: touch;
 }
+
+/* 2. Контейнер React */
+#root {
+  width: 100%;
+  /* min-height гарантирует, что фон всегда на весь экран, 
+     но не ограничивает прокрутку вниз */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 3. Кастомный скроллбар (тонкий и ненавязчивый) */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 4px;
 }
 ::-webkit-scrollbar-track {
-  @apply bg-gray-900 rounded-lg;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-700 rounded-lg;
+  background: rgba(220, 38, 38, 0.4); /* Полупрозрачный красный */
+  border-radius: 10px;
 }
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-600;
+
+/* 4. Настройки мобильного UX */
+@layer base {
+  body {
+    /* Запрещаем выделение текста (кроме полей ввода) */
+    -webkit-user-select: none;
+    user-select: none;
+
+    /* ВКЛЮЧАЕМ стандартное поведение скролла (убираем overscroll-behavior: none) */
+    overscroll-behavior-y: auto;
+  }
+}
+
+/* Фикс: разрешаем выделение в полях поиска */
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
 }

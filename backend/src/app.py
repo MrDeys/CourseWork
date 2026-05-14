@@ -18,7 +18,24 @@ def create_app():
             # Просто пишем в лог, но не роняем сервер
             print(f"⚠️ БД пока не готова: {e}")
 
-    #CORS(app, resources={r"/api/*": {"origins": "*"}})
-    CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+    from flask_cors import CORS
+
+def create_app():
+    app = Flask(__name__)
+    
+    # Разрешаем запросы и от браузера (IP), и от приложения (capacitor://)
+    CORS(app, resources={
+        r"/api/*": {
+            "origins": [
+                "http://192.168.3.22", 
+                "http://localhost", 
+                "capacitor://localhost", # <--- ОБЯЗАТЕЛЬНО ДЛЯ ПРИЛОЖЕНИЯ
+                "http://localhost:3000"
+            ],
+            "methods": ["GET", "POST", "OPTIONS"],
+            "allow_headers": ["Content-Type", "Bypass-Tunnel-Reminder"]
+        }
+    })
+    
     app.register_blueprint(bp, url_prefix='/api/matches')
     return app
