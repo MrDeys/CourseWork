@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { getMatchId } from "../api";
 
-// --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
-
 const ResultCircle = ({ res }) => {
   const colors = { W: "bg-green-500", D: "bg-yellow-500", L: "bg-red-600" };
   return (
@@ -45,7 +43,6 @@ const StatBar = ({ label, h, a, reverse, color }) => {
   );
 };
 
-// --- КОМПОНЕНТ ИСТОРИИ (С ПРЯТАНЬЕМ ТЕКСТА НА МОБИЛКЕ) ---
 const HistoryList = ({ title, matches }) => (
   <div className="bg-gray-800/40 p-6 md:p-8 rounded-[32px] border border-white/5 h-full shadow-xl">
     <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-8 text-center">
@@ -68,7 +65,6 @@ const HistoryList = ({ title, matches }) => (
               alt=""
               className="w-8 h-8 md:w-9 md:h-9 object-contain flex-shrink-0"
             />
-            {/* ТЕКСТ: Скрыт на мобилке, виден на MD+ */}
             <span className="text-sm md:text-base font-black text-white truncate hidden md:block">
               {m.opponent}
             </span>
@@ -89,7 +85,6 @@ const HistoryList = ({ title, matches }) => (
   </div>
 );
 
-// --- ЛОГИКА ЦВЕТА H2H (ОТНОСИТЕЛЬНО ТЕКУЩЕГО ХОЗЯИНА) ---
 const getH2HResultStyle = (score, pastHomeId, currentHomeId) => {
   const [homeG, awayG] = score.split(":").map(Number);
   if (homeG === awayG)
@@ -148,7 +143,6 @@ function MatchDetailPage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 text-white font-sans space-y-10">
-      {/* 1. ШАПКА МАТЧА */}
       <div className="bg-gray-900 p-8 md:p-12 rounded-[40px] border border-gray-800 shadow-2xl flex flex-col md:flex-row justify-between items-center relative overflow-hidden">
         <div className="flex flex-col items-center w-full md:w-2/5">
           <div className="text-[11px] font-black text-yellow-500 bg-gray-800 px-4 py-1.5 rounded-full mb-4 tracking-widest border border-gray-700">
@@ -217,7 +211,6 @@ function MatchDetailPage() {
         </div>
       </div>
 
-      {/* 2. ПРОГНОЗ НЕЙРОСЕТИ */}
       {match.prediction && (
         <div className="bg-gray-900 rounded-[32px] p-8 md:p-12 border border-gray-800 shadow-2xl">
           <h2 className="text-sm font-black text-white uppercase tracking-[0.3em] mb-10 text-center">
@@ -225,6 +218,9 @@ function MatchDetailPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch relative">
             <div className="bg-black/40 p-6 rounded-3xl border border-gray-800 flex flex-col justify-center">
+              <h3 className="text-[11px] font-black text-white/50 uppercase tracking-widest mb-4 text-center">
+                Вероятность исхода
+              </h3>
               <div className="flex justify-between mb-3 text-xs font-black uppercase tracking-widest text-white/70">
                 <span>П1: {match.prediction.prob_home}%</span>
                 <span>X: {match.prediction.prob_draw}%</span>
@@ -245,6 +241,7 @@ function MatchDetailPage() {
                 ></div>
               </div>
             </div>
+
             <div className="flex flex-col items-center justify-center p-6 bg-gray-800/30 rounded-3xl border border-gray-800 text-center">
               <span
                 className={`text-xl font-black uppercase mb-3 ${predStyle.color}`}
@@ -258,7 +255,11 @@ function MatchDetailPage() {
                 {match.prediction.exact_score}
               </span>
             </div>
+
             <div className="bg-black/40 p-6 rounded-3xl border border-gray-800 flex flex-col justify-center">
+              <h3 className="text-[11px] font-black text-white/50 uppercase tracking-widest mb-4 text-center">
+                Больше или меньше 2.5 голов
+              </h3>
               <div className="flex justify-between mb-3 text-xs font-black uppercase tracking-widest text-white/70">
                 <span>БОЛЬШЕ: {match.prediction.total_over_2_5}%</span>
                 <span>
@@ -282,10 +283,9 @@ function MatchDetailPage() {
         </div>
       )}
 
-      {/* 3. ГЛУБОКАЯ СТАТИСТИКА */}
       <div className="bg-gray-900 rounded-[32px] p-8 md:p-12 border border-gray-800 shadow-xl">
         <h2 className="text-sm font-black text-white uppercase tracking-[0.3em] mb-12 text-center">
-          Анализ формы (Last 5)
+          Анализ формы
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-20">
           <div className="space-y-8">
@@ -344,7 +344,6 @@ function MatchDetailPage() {
         </div>
       </div>
 
-      {/* 4. ИСТОРИЯ ПОСЛЕДНИХ ИГР */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <HistoryList
           title={`История: ${match.homeTeam.name_ru || match.homeTeam.name}`}
@@ -356,7 +355,6 @@ function MatchDetailPage() {
         />
       </div>
 
-      {/* 5. ОЧНЫЕ ВСТРЕЧИ (H2H) */}
       <div className="bg-gray-900/60 p-6 md:p-12 rounded-[40px] border border-red-600/20 shadow-2xl">
         <h3 className="text-xs font-black text-red-600 uppercase tracking-[0.5em] mb-10 text-center">
           Очные встречи
@@ -367,7 +365,6 @@ function MatchDetailPage() {
               key={i}
               className="flex items-center justify-between bg-black/40 p-4 md:p-5 rounded-2xl border border-white/5 transition-all hover:border-white/10"
             >
-              {/* Левая команда: Название скрыто на мобилке */}
               <div className="flex-1 flex items-center justify-end gap-3 min-w-0">
                 <span className="text-sm md:text-base font-black uppercase truncate text-white hidden md:block text-right">
                   {m.home}
@@ -379,7 +376,6 @@ function MatchDetailPage() {
                 />
               </div>
 
-              {/* Центр: Дата и Счет */}
               <div className="flex flex-col items-center gap-1 mx-3 md:mx-10 min-w-[90px] md:min-w-[110px]">
                 <span className="text-[9px] md:text-[10px] font-black text-white/40 uppercase">
                   {m.date}
@@ -391,7 +387,6 @@ function MatchDetailPage() {
                 </div>
               </div>
 
-              {/* Правая команда: Название скрыто на мобилке */}
               <div className="flex-1 flex items-center justify-start gap-3 min-w-0">
                 <img
                   src={m.away_logo}

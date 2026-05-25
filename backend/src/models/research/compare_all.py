@@ -24,9 +24,8 @@ def load_config(model_id):
     return None
 
 def evaluate_all():
-    print("🚀 Запуск глубокого анализа моделей...")
+    print("Запуск глубокого анализа моделей...")
     
-    # --- 1. ЗАГРУЗКА ДАННЫХ ---
     try:
         d_flat = get_prepared_data()
         X_test_flat = d_flat['X_test']
@@ -34,7 +33,7 @@ def evaluate_all():
         y_out_f, y_tot_f = d_flat['y_out_test'], d_flat['y_tot_test']
         y_hg_f, y_ag_f = d_flat['y_hg_test'], d_flat['y_ag_test']
     except Exception as e:
-        print(f"❌ Ошибка загрузки плоских данных: {e}")
+        print(f"Ошибка загрузки данных: {e}")
         return
 
     try:
@@ -51,7 +50,7 @@ def evaluate_all():
         y_hg_r = np.array([i.get('target_home_goals', 0) for i in test_rnn])
         y_ag_r = np.array([i.get('target_away_goals', 0) for i in test_rnn])
     except Exception as e:
-        print(f"❌ Ошибка загрузки RNN данных: {e}")
+        print(f"Ошибка загрузки RNN данных: {e}")
         test_rnn = None
 
     results = []
@@ -74,8 +73,6 @@ def evaluate_all():
             'Goals_MAE': mae,
             'Exact_Score': exact
         })
-
-    # --- ТЕСТЫ ---
 
     # 1. Random Forest
     rf_dir = os.path.join(MODELS_SAVED_DIR, 'rf')
@@ -102,7 +99,7 @@ def evaluate_all():
                 add_result('MLP (Deep)', p_out.numpy(), torch.sigmoid(p_tot).squeeze().numpy(),
                            p_hg.squeeze().numpy(), p_ag.squeeze().numpy(), y_out_f, y_tot_f, y_hg_f, y_ag_f)
         except Exception as e:
-            print(f"⚠️ MLP Load Error: {e}")
+            print(f"MLP Load Error: {e}")
 
     # 3. RNN (LSTM & GRU)
     if test_rnn:
@@ -111,13 +108,11 @@ def evaluate_all():
             m_path = os.path.join(MODELS_SAVED_DIR, f'best_{m_id}_model.pth')
             if cfg and os.path.exists(m_path):
                 try:
-                    # ПРИНУДИТЕЛЬНОЕ ПРИВЕДЕНИЕ К INT
                     h_size = int(cfg['hidden_size'])
                     layers = int(cfg['num_layers'])
                     
                     model = m_class(int(h_seq_ts.shape[2]), int(ctx_ts.shape[1]), h_size, layers)
                     
-                    # Пытаемся загрузить. Если в слоях ошибка - пробуем strict=False для отчета
                     state_dict = torch.load(m_path, map_location='cpu')
                     model.load_state_dict(state_dict)
                     
@@ -127,17 +122,16 @@ def evaluate_all():
                         add_result(name, p_out.numpy(), torch.sigmoid(p_tot).squeeze().numpy(),
                                    p_hg.squeeze().numpy(), p_ag.squeeze().numpy(), y_out_r, y_tot_r, y_hg_r, y_ag_r)
                 except Exception as e:
-                    print(f"⚠️ {name} Load Error: {e}")
+                    print(f"{name} Load Error: {e}")
 
-    # --- ВЫВОД ---
     if not results: return
     res_df = pd.DataFrame(results).sort_values(by='F1_Macro', ascending=False)
-    print("\n" + "="*115)
+    print("\n" + "="*100)
     print(f"{'МОДЕЛЬ':<20} | {'ACC':<6} | {'F1_MAC':<6} | {'PREC':<6} | {'REC':<6} | {'F1_DRW':<6} | {'TOT_ACC':<7} | {'MAE':<5} | {'EXACT'}")
-    print("-" * 115)
+    print("-" * 100)
     for _, r in res_df.iterrows():
         print(f"{r['Model']:<20} | {r['Acc']:.4f} | {r['F1_Macro']:.4f} | {r['Prec_Macro']:.4f} | {r['Recall_Macro']:.4f} | {r['F1_Draw (X)']:.4f} | {r['Total_Acc']:.4f}  | {r['Goals_MAE']:.3f} | {r['Exact_Score']:.4f}")
-    print("="*115)
+    print("="*100)
 
 if __name__ == "__main__":
     evaluate_all()

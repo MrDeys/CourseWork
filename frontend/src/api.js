@@ -4,7 +4,6 @@ import axios from "axios";
 const API_BASE_URL = "http://192.168.3.22:5000/api";
 //const API_BASE_URL = "https://my-neuro-diploma-777.loca.lt/api";
 
-// 2. Создаем специальный экземпляр axios с настройками для туннеля
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -12,7 +11,6 @@ const api = axios.create({
   },
 });
 
-// Умный парсер данных
 const parseData = (data) => {
   if (typeof data === "string") {
     try {
@@ -27,7 +25,6 @@ const parseData = (data) => {
 
 export const getMatches = async (leagueCode = null) => {
   try {
-    // ВАЖНО: используем api.get, путь пишем ОТНОСИТЕЛЬНО baseURL
     let url = "/matches/";
     if (leagueCode) {
       url += `?league=${leagueCode}`;

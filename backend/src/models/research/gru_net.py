@@ -11,14 +11,12 @@ import itertools
 import json
 from data_utils import MODELS_SAVED_DIR, save_config
 
-# --- АРХИТЕКТУРА: ДВУХПОТОЧНАЯ GRU ---
 class FootballGRUNet(nn.Module):
     def __init__(self, sequence_input_size, context_input_size, hidden_size=64, num_layers=1, dropout_rate=0.3):
         super(FootballGRUNet, self).__init__()
         
         self.gru = nn.GRU(sequence_input_size, hidden_size, num_layers, batch_first=True)
         
-        # Объединяем выходы GRU (2 команды) + контекст (Elo)
         combined_size = (hidden_size * 2) + context_input_size
         self.fc = nn.Sequential(
             nn.Linear(combined_size, hidden_size), 
@@ -35,7 +33,6 @@ class FootballGRUNet(nn.Module):
         _, h_n = self.gru(home_seq)
         _, a_n = self.gru(away_seq)
         
-        # Берем последний слой последнего шага
         combined = torch.cat((h_n[-1], a_n[-1], context), dim=1)
         x = self.fc(combined)
         return self.head_outcome(x), self.head_total(x), self.head_home_goals(x), self.head_away_goals(x)
@@ -52,7 +49,6 @@ class RNNFootballDataset(Dataset):
             torch.tensor(item['context'], dtype=torch.float32),
             torch.tensor(item['target_outcome'], dtype=torch.long),
             torch.tensor(item['target_total'], dtype=torch.float32),
-            # Добавили голы для обучения точного счета
             torch.tensor(item.get('target_home_goals', 0), dtype=torch.float32),
             torch.tensor(item.get('target_away_goals', 0), dtype=torch.float32)
         )
@@ -79,10 +75,8 @@ def train_and_evaluate_gru(params, train_data, test_data):
         model.train()
         for h_seq, a_seq, ctx, target_out, target_tot, h_g, a_g in train_loader:
             optimizer.zero_grad()
-            # Исправлено: получаем 4 выхода
             p_out, p_tot, p_hg, p_ag = model(h_seq, a_seq, ctx)
             
-            # Суммарный лосс
             loss = criterion_out(p_out, target_out) + \
                    criterion_tot(p_tot.squeeze(), target_tot) + \
                    criterion_goals(p_hg.squeeze(), h_g) + \
@@ -95,7 +89,6 @@ def train_and_evaluate_gru(params, train_data, test_data):
         preds, trues = [], []
         with torch.no_grad():
             for h_seq, a_seq, ctx, target_out, _, _, _ in test_loader:
-                # Исправлено: распаковка 4 значений
                 p_out, _, _, _ = model(h_seq, a_seq, ctx)
                 preds.extend(torch.argmax(p_out, 1).numpy())
                 trues.extend(target_out.numpy())
@@ -107,7 +100,7 @@ def train_and_evaluate_gru(params, train_data, test_data):
     return best_f1
 
 def run_tuning_gru():
-    print("🚀 Загрузка последовательностей для GRU...")
+    print("Загрузка последовательностей для GRU...")
     pkl_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../dataset/rnn_dataset.pkl'))
     with open(pkl_path, 'rb') as f:
         full_data = pickle.load(f)
@@ -124,7 +117,6 @@ def run_tuning_gru():
     
     'dropout': [0.3, 0.5],
     
-    # Размер батча: тоже влияет на стабильность обучения рекуррентных сетей
     'batch_size': [32, 64]
     }
 
@@ -139,16 +131,14 @@ def run_tuning_gru():
         results.append(params)
         print(f"  -> F1 Macro: {f1:.4f}")
 
-    # --- СОХРАНЕНИЕ ---
     results_df = pd.DataFrame(results).sort_values(by='f1_macro', ascending=False)
     os.makedirs(MODELS_SAVED_DIR, exist_ok=True)
     results_df.to_csv(os.path.join(MODELS_SAVED_DIR, 'tuning_gru_results.csv'), index=False)
     
     best_params = results_df.iloc[0].to_dict()
-    print(f"\n🏆 ЛУЧШИЕ ПАРАМЕТРЫ GRU: {best_params}")
+    print(f"\nЛУЧШИЕ ПАРАМЕТРЫ GRU: {best_params}")
 
-    # Сохраняем конфиг для корректной загрузки в compare_all
-    d_dummy = {'X_train': np.zeros((1, train_data[0]['home_seq'].shape[1]))} # Костыль для совместимости функции
+    d_dummy = {'X_train': np.zeros((1, train_data[0]['home_seq'].shape[1]))}
     save_config(best_params, d_dummy, 'gru') 
 
     final_model_path = os.path.join(MODELS_SAVED_DIR, 'best_gru_model.pth')
@@ -157,7 +147,7 @@ def run_tuning_gru():
     if os.path.exists(temp_path):
         if os.path.exists(final_model_path): os.remove(final_model_path)
         os.rename(temp_path, final_model_path)
-        print(f"✅ Финальная модель GRU сохранена.")
+        print(f"Финальная модель GRU сохранена.")
 
 if __name__ == "__main__":
     run_tuning_gru()

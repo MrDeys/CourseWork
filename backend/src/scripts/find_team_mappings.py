@@ -6,12 +6,10 @@ import soccerdata as sd
 from thefuzz import process 
 from sqlalchemy import or_, and_
 
-# --- НАСТРОЙКА ПУТЕЙ ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.abspath(os.path.join(BASE_DIR, '..', '..')))
 from src.database.tables import SessionLocal, Match, Team
 
-# СЛОВАРЬ СООТВЕТСТВИЙ (Understat -> ClubElo)
 FINAL_ELO_MAP = {
     "Athletic Club": "Bilbao", "Athletic": "Bilbao",
     "Atletico Madrid": "Atletico", "Real Sociedad": "Sociedad",
@@ -23,16 +21,13 @@ FINAL_ELO_MAP = {
     "RasenBallsport Leipzig": "RB Leipzig", "Paris Saint Germain": "Paris SG"
 }
 
-# --- ИСПРАВЛЕНИЕ ОШИБКИ PYLANCE: ОПРЕДЕЛЯЕМ ФУНКЦИЮ ---
 def find_name(team_obj, elo_names_list):
     db_name = team_obj.name.strip()
-    # 1. Проверка по ручному словарю
     if db_name in FINAL_ELO_MAP:
         return FINAL_ELO_MAP[db_name]
     if team_obj.name_ru and team_obj.name_ru in FINAL_ELO_MAP:
         return FINAL_ELO_MAP[team_obj.name_ru]
     
-    # 2. Нечеткий поиск (если ClubElo вернул список имен)
     if elo_names_list:
         m_name, score = process.extractOne(db_name, elo_names_list)
         if score > 85:
@@ -44,22 +39,19 @@ def auto_sync_elo():
     club_elo = sd.ClubElo()
     now_dt = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     
-    print(f"🚀 СТАРТ СИНХРОНИЗАЦИИ ELO ({datetime.now().strftime('%H:%M:%S')})")
+    print(f"СТАРТ СИНХРОНИЗАЦИИ ELO ({datetime.now().strftime('%H:%M:%S')})")
 
     try:
-        # 1. ПОЛУЧАЕМ ТЕКУЩИЕ РЕЙТИНГИ (ДЛЯ БУДУЩИХ МАТЧЕЙ)
-        print("📡 Загрузка актуальных рейтингов команд на сегодня...")
+        print("Загрузка актуальных рейтингов команд на сегодня...")
         current_elo_df = club_elo.read_by_date().reset_index().set_index('team')
         elo_names_list = current_elo_df.index.unique().tolist()
 
-        # 2. ОБНОВЛЯЕМ БУДУЩИЕ МАТЧИ (на 30 дней вперед)
-        # Мы всегда обновляем их, чтобы рейтинг соответствовал "текущей форме"
         future_matches = session.query(Match).filter(
             Match.date >= now_dt,
             Match.date <= now_dt + timedelta(days=30)
         ).all()
 
-        print(f"🔄 Обновление 'текущей формы' для {len(future_matches)} будущих матчей...")
+        print(f"Обновление 'текущей формы' для {len(future_matches)} будущих матчей...")
         for match in future_matches:
             h_target = find_name(match.home_team, elo_names_list)
             a_target = find_name(match.away_team, elo_names_list)
@@ -71,24 +63,21 @@ def auto_sync_elo():
         
         session.commit()
 
-        # 3. ЗАПОЛНЯЕМ ИСТОРИЮ (только пустые матчи в прошлом)
-        # Берем порцию в 200 штук, чтобы не забанили
         missing_history = session.query(Match).filter(
             Match.date < now_dt,
             or_(Match.home_elo == None, Match.home_elo == 0)
-        ).order_by(Match.date.desc()).limit(200).all() # 
+        ).order_by(Match.date.desc()).limit(200).all() 
 
         if not missing_history:
-            print("✅ История рейтингов полностью заполнена.")
+            print("История рейтингов полностью заполнена.")
         else:
-            print(f"📦 Обработка {len(missing_history)} исторических матчей...")
+            print(f"Обработка {len(missing_history)} исторических матчей...")
             elo_cache = {}
             for match in missing_history:
-                # Для истории берем рейтинг на день матча
                 hist_date_str = (match.date - timedelta(days=1)).strftime('%Y-%m-%d')
                 
                 if hist_date_str not in elo_cache:
-                    time.sleep(3) # Защита от бана
+                    time.sleep(3)
                     try:
                         df = club_elo.read_by_date(hist_date_str)
                         elo_cache[hist_date_str] = df.reset_index().set_index('team')
@@ -107,11 +96,11 @@ def auto_sync_elo():
             session.commit()
 
     except Exception as e:
-        print(f"❌ Ошибка в auto_sync_elo: {e}")
+        print(f"Ошибка в auto_sync_elo: {e}")
         session.rollback()
     finally:
         session.close()
-        print("✨ Синхронизация завершена.")
+        print("Синхронизация завершена.")
 
 if __name__ == "__main__":
     auto_sync_elo()

@@ -11,7 +11,6 @@ import itertools
 import json
 from data_utils import MODELS_SAVED_DIR, save_config
 
-# --- АРХИТЕКТУРА: ДВУХПОТОЧНАЯ LSTM ---
 class FootballLSTM(nn.Module):
     def __init__(self, sequence_input_size, context_input_size, hidden_size=64, num_layers=1, dropout_rate=0.3):
         super(FootballLSTM, self).__init__()
@@ -40,12 +39,10 @@ class FootballLSTM(nn.Module):
         _, (h_n, _) = self.lstm(home_seq)
         _, (a_n, _) = self.lstm(away_seq)
         
-        # h_n[-1] берет скрытое состояние последнего слоя
         combined = torch.cat((h_n[-1], a_n[-1], context), dim=1)
         x = self.fc(combined)
         return self.head_outcome(x), self.head_total(x), self.head_home_goals(x), self.head_away_goals(x)
 
-# --- ДАТАСЕТ ---
 class RNNFootballDataset(Dataset):
     def __init__(self, data_list):
         self.data = data_list
@@ -86,7 +83,6 @@ def train_and_evaluate_lstm(params, train_data, test_data):
             optimizer.zero_grad()
             p_out, p_tot, p_hg, p_ag = model(h_seq, a_seq, ctx)
             
-            # Суммарный лосс по всем задачам
             loss = criterion_out(p_out, target_out) + \
                    criterion_tot(p_tot.squeeze(), target_tot) + \
                    criterion_goals(p_hg.squeeze(), h_g) + \
@@ -111,7 +107,7 @@ def train_and_evaluate_lstm(params, train_data, test_data):
     return best_f1
 
 def run_tuning_lstm():
-    print("🚀 Загрузка RNN-датасета...")
+    print("Загрузка RNN-датасета...")
     pkl_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../dataset/rnn_dataset.pkl'))
     with open(pkl_path, 'rb') as f:
         full_data = pickle.load(f)
@@ -122,16 +118,12 @@ def run_tuning_lstm():
     param_grid = {
         'lr': [0.001, 0.0007, 0.0005],
     
-        # Размер вектора памяти. 128 обычно "золотая середина" для таких задач
         'hidden_size': [64, 128],
         
-        # Количество рекуррентных слоев. Более 2 слоев часто ведут к затуханию градиента
         'num_layers': [1, 2],
         
-        # Dropout в LSTM обычно применяется между слоями
         'dropout': [0.2, 0.4, 0.5],
         
-        # Дополнительно: L2 регуляризация (weight_decay) помогает при работе с временными рядами
         'weight_decay': [1e-5, 1e-4]
     }
 
@@ -146,15 +138,13 @@ def run_tuning_lstm():
         results.append(params)
         print(f"  -> F1 Macro: {f1:.4f}")
 
-    # --- СОХРАНЕНИЕ РЕЗУЛЬТАТОВ ---
     results_df = pd.DataFrame(results).sort_values(by='f1_macro', ascending=False)
     os.makedirs(MODELS_SAVED_DIR, exist_ok=True)
     results_df.to_csv(os.path.join(MODELS_SAVED_DIR, 'tuning_lstm_results.csv'), index=False)
     
     best_params = results_df.iloc[0].to_dict()
-    print(f"\n🏆 ЛУЧШИЕ ПАРАМЕТРЫ LSTM: {best_params}")
+    print(f"\nЛУЧШИЕ ПАРАМЕТРЫ LSTM: {best_params}")
 
-    # Костыль для сохранения конфига (input_size здесь не важен, так как LSTM берет его из данных)
     d_dummy = {'X_train': np.zeros((1, train_data[0]['home_seq'].shape[1]))}
     save_config(best_params, d_dummy, 'lstm') 
 
@@ -164,7 +154,7 @@ def run_tuning_lstm():
     if os.path.exists(temp_path):
         if os.path.exists(final_model_path): os.remove(final_model_path)
         os.rename(temp_path, final_model_path)
-        print(f"✅ Финальная модель LSTM успешно сохранена.")
+        print(f"Финальная модель LSTM успешно сохранена.")
 
 if __name__ == "__main__":
     run_tuning_lstm()

@@ -15,5 +15,4 @@ RUN pip install --upgrade pip && \
 COPY . .
 
 ENV PYTHONPATH=/app
-# Для локального запуска используем обычный python
 CMD ["python", "run.py"]

@@ -6,15 +6,12 @@ function MatchList({ matches, selectedLeague, orderedLeagues }) {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get("search")?.toLowerCase() || "";
 
-  // null означает режим "ВСЕ"
   const [selectedDate, setSelectedDate] = useState(null);
 
-  // Скролл вверх при выборе даты или поиске
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [selectedDate, searchQuery]);
 
-  // Даты для ДЕСКТОПНОЙ версии (полный список)
   const dateOptions = useMemo(() => {
     const dates = [];
     for (let i = -1; i <= 5; i++) {
@@ -29,7 +26,6 @@ function MatchList({ matches, selectedLeague, orderedLeagues }) {
     return dates;
   }, []);
 
-  // Даты для МОБИЛЬНОЙ версии (Вчера и Завтра)
   const mobileDates = useMemo(() => {
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
@@ -41,7 +37,6 @@ function MatchList({ matches, selectedLeague, orderedLeagues }) {
     };
   }, []);
 
-  // --- ЛОГИКА ФИЛЬТРАЦИИ ---
   const filteredMatches = useMemo(() => {
     let result = matches.filter((m) => m && m.homeTeam && m.awayTeam);
     const nowISO = new Date().toISOString();
@@ -78,7 +73,6 @@ function MatchList({ matches, selectedLeague, orderedLeagues }) {
     return upcoming;
   }, [matches, selectedLeague, selectedDate, searchQuery]);
 
-  // Группировка по лигам
   const groupedMatches = useMemo(() => {
     const groups = {};
     filteredMatches.forEach((match) => {
@@ -106,10 +100,8 @@ function MatchList({ matches, selectedLeague, orderedLeagues }) {
 
   return (
     <div className="w-full">
-      {/* ПАНЕЛЬ ВЫБОРА ДАТ */}
       {!searchQuery && (
         <div className="w-full mb-10">
-          {/* ВЕРСИЯ ДЛЯ ПК (Scrollable Row) */}
           <div className="hidden md:flex items-center gap-2 bg-gray-900/40 p-1.5 rounded-b-2xl border-x border-b border-gray-800 overflow-x-auto no-scrollbar">
             <button
               onClick={() => setSelectedDate(null)}
@@ -155,7 +147,6 @@ function MatchList({ matches, selectedLeague, orderedLeagues }) {
             </div>
           </div>
 
-          {/* ВЕРСИЯ ДЛЯ МОБИЛОК (4 кнопки в ряд) */}
           <div className="flex md:hidden items-center gap-2 bg-gray-900/60 p-2 rounded-2xl border border-white/5 shadow-xl">
             <button
               onClick={() => setSelectedDate(null)}
@@ -203,7 +194,6 @@ function MatchList({ matches, selectedLeague, orderedLeagues }) {
         </div>
       )}
 
-      {/* ВЫВОД МАТЧЕЙ */}
       {groupedMatches.length === 0 ? (
         <div className="text-center py-20 bg-gray-900/20 rounded-3xl border border-gray-800/50 px-6">
           <h3 className="text-white font-black uppercase tracking-tighter text-lg mb-2">

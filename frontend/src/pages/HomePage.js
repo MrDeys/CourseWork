@@ -4,7 +4,6 @@ import MatchList from "../components/MatchList";
 import { getMatches } from "../api";
 import OfflineScreen from "../components/Layout/OfflineScreen";
 
-// Импорт логотипов (оставляем как было)
 import plLogo from "../assets/leagues/premier-league.png";
 import blLogo from "../assets/leagues/bundesliga.png";
 import saLogo from "../assets/leagues/serie-a.png";
@@ -28,7 +27,6 @@ function HomePage() {
   const [searchParams] = useSearchParams();
   const LeagueCode = searchParams.get("league");
 
-  // Оборачиваем функцию в useCallback, чтобы передать её в OfflineScreen
   const fetchAllMatches = useCallback(async () => {
     setLoading(true);
     setError(false);
@@ -38,7 +36,6 @@ function HomePage() {
         setAllMatches(data);
         setError(false);
       } else {
-        // Если пришел пустой массив или null - считаем ошибкой сети/сервера
         setError(true);
       }
     } catch (err) {
@@ -57,7 +54,6 @@ function HomePage() {
     <div className="max-w-6xl mx-auto px-4 min-h-screen">
       <section className="w-full py-4">
         {loading ? (
-          /* 1. СОСТОЯНИЕ ЗАГРУЗКИ */
           <div className="flex flex-col justify-center items-center h-96">
             <div className="w-10 h-10 border-4 border-red-600 border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">
@@ -65,10 +61,8 @@ function HomePage() {
             </p>
           </div>
         ) : error ? (
-          /* 2. СОСТОЯНИЕ ОШИБКИ (Offline) */
           <OfflineScreen onRetry={fetchAllMatches} />
         ) : (
-          /* 3. ОСНОВНОЙ КОНТЕНТ */
           <MatchList
             matches={allMatches}
             selectedLeague={LeagueCode}

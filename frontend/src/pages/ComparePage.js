@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { getMatches, getTeamComparison } from "../api";
 
-// --- ВСПОМОГАТЕЛЬНЫЕ КОМПОНЕНТЫ ---
-
 const ResultCircle = ({ res }) => {
   const colors = { W: "bg-green-500", D: "bg-yellow-500", L: "bg-red-600" };
   return (
@@ -44,7 +42,6 @@ const StatBar = ({ label, h, a, reverse, color }) => {
   );
 };
 
-// --- КОМПОНЕНТ ИСТОРИИ (С ПРЯТАНЬЕМ ТЕКСТА НА МОБИЛКЕ) ---
 const HistoryList = ({ title, matches }) => (
   <div className="bg-gray-800/40 p-6 md:p-8 rounded-[32px] border border-white/5 h-full shadow-xl">
     <h3 className="text-xs font-black text-white uppercase tracking-[0.2em] mb-8 text-center">
@@ -68,7 +65,6 @@ const HistoryList = ({ title, matches }) => (
                 alt=""
                 className="w-8 h-8 md:w-9 md:h-9 object-contain flex-shrink-0"
               />
-              {/* Скрываем название на мобилке */}
               <span className="text-sm md:text-base font-black text-white truncate hidden md:block">
                 {m.opponent}
               </span>
@@ -199,7 +195,6 @@ function ComparePage() {
     if (isSecondInput) {
       setTeam2(teamObj.name);
       setShowSugg2(false);
-      // Если первая команда еще не выбрана — перекидываем фокус на неё
       if (!team1) {
         input1Ref.current.focus();
       } else {
@@ -208,7 +203,6 @@ function ComparePage() {
     } else {
       setTeam1(teamObj.name);
       setShowSugg1(false);
-      // Если вторая команда еще не выбрана — перекидываем фокус на неё
       if (!team2) {
         input2Ref.current.focus();
       } else {
@@ -219,10 +213,8 @@ function ComparePage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10 text-white font-sans">
-      {/* 1. ПАНЕЛЬ ВЫБОРА КОМАНД */}
       <div className="bg-gray-900 p-8 rounded-[40px] border border-gray-800 shadow-2xl mb-12">
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          {/* ИНПУТ 1 (ХОЗЯЕВА) */}
           <div className="w-full md:w-2/5 relative" ref={container1Ref}>
             <input
               ref={input1Ref}
@@ -268,7 +260,6 @@ function ComparePage() {
             )}
           </div>
 
-          {/* КНОПКА VS (Запуск анализа) */}
           <button
             onClick={() => handleCompare()}
             title="Сравнить команды"
@@ -277,7 +268,6 @@ function ComparePage() {
             <span className="group-hover:animate-pulse">VS</span>
           </button>
 
-          {/* ИНПУТ 2 (ГОСТИ) */}
           <div className="w-full md:w-2/5 relative" ref={container2Ref}>
             <input
               ref={input2Ref}
@@ -336,10 +326,8 @@ function ComparePage() {
         </div>
       )}
 
-      {/* 2. РЕЗУЛЬТАТЫ СРАВНЕНИЯ */}
       {comparisonData && !loading && (
         <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 space-y-12">
-          {/* ШАПКА КОМАНД */}
           <div className="flex flex-col md:flex-row justify-between items-center bg-gray-900 p-8 md:p-12 rounded-[40px] border border-gray-800 shadow-2xl relative overflow-hidden">
             <div className="flex flex-col items-center w-full md:w-2/5">
               <div className="text-[11px] font-black text-yellow-500 bg-gray-800 px-5 py-2 rounded-full mb-6 tracking-widest border border-gray-700 uppercase shadow-lg">
@@ -382,7 +370,6 @@ function ComparePage() {
             </div>
           </div>
 
-          {/* ПРОГНОЗ НЕЙРОСЕТИ */}
           {comparisonData.prediction && (
             <div className="bg-gray-900 rounded-[40px] p-10 md:p-14 border border-gray-800 shadow-2xl relative overflow-hidden">
               <h2 className="text-xs font-black text-white opacity-40 uppercase tracking-[0.5em] mb-12 text-center">
@@ -465,7 +452,6 @@ function ComparePage() {
             </div>
           )}
 
-          {/* СТАТИСТИКА */}
           <div className="bg-gray-900 rounded-[40px] p-10 md:p-14 border border-gray-800 shadow-xl">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-16 md:gap-24">
               <div className="space-y-10">
@@ -524,7 +510,6 @@ function ComparePage() {
             </div>
           </div>
 
-          {/* ИСТОРИЯ */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <HistoryList
               title={`История: ${comparisonData.team1.name}`}
@@ -536,7 +521,6 @@ function ComparePage() {
             />
           </div>
 
-          {/* ЛИЧНЫЕ ВСТРЕЧИ (H2H - ОБНОВЛЕНО ДЛЯ МОБИЛОК) */}
           <div className="bg-gray-900/60 p-6 md:p-12 rounded-[40px] border border-red-600/20 shadow-2xl">
             <h3 className="text-xs font-black text-red-600 uppercase tracking-[0.5em] mb-10 text-center">
               Очные встречи
@@ -548,7 +532,6 @@ function ComparePage() {
                     key={i}
                     className="flex items-center justify-between bg-black/40 p-4 md:p-6 rounded-3xl border border-white/5 transition-all hover:border-white/10"
                   >
-                    {/* Левая команда */}
                     <div className="flex-1 flex items-center justify-end gap-3 min-w-0">
                       <span className="text-sm md:text-lg font-black text-white uppercase truncate text-right hidden md:block">
                         {m.home}
@@ -560,7 +543,6 @@ function ComparePage() {
                       />
                     </div>
 
-                    {/* Центр */}
                     <div className="flex flex-col items-center gap-1 mx-3 md:mx-8 min-w-[90px] md:min-w-[120px]">
                       <span className="text-[9px] md:text-[11px] font-black text-white/40 uppercase tracking-[0.2em]">
                         {m.date}
@@ -572,7 +554,6 @@ function ComparePage() {
                       </div>
                     </div>
 
-                    {/* Правая команда */}
                     <div className="flex-1 flex items-center justify-start gap-3 min-w-0">
                       <img
                         src={m.away_logo}

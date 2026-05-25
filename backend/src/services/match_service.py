@@ -75,14 +75,14 @@ class MatchService:
             "league": match.league.name,
             "status": status,
             "homeTeam": {
-                "id": match.home_team_id, # Добавили ID
+                "id": match.home_team_id, 
                 "name": match.home_team.name, 
                 "name_ru": getattr(match.home_team, 'name_ru', match.home_team.name), 
                 "logo_url": match.home_team.logo_url, 
                 "elo": self._safe_float(match.home_elo, 1500.0)
             },
             "awayTeam": {
-                "id": match.away_team_id, # Добавили ID
+                "id": match.away_team_id,
                 "name": match.away_team.name, 
                 "name_ru": getattr(match.away_team, 'name_ru', match.away_team.name), 
                 "logo_url": match.away_team.logo_url, 
@@ -108,7 +108,6 @@ class MatchService:
             data["homeTeam"].update({"stats_last_5": h_d["stats"], "history": h_d["history"]})
             data["awayTeam"].update({"stats_last_5": a_d["stats"], "history": a_d["history"]})
             
-            # --- ОБНОВЛЕННЫЙ БЛОК H2H (с лого и ID) ---
             h2h_raw = session.query(Match).filter(
                 or_(
                     and_(Match.home_team_id == match.home_team_id, Match.away_team_id == match.away_team_id),
@@ -161,7 +160,6 @@ class MatchService:
             t1_e = self._safe_float(getattr(t1_l, 'home_elo' if t1_l and t1_l.home_team_id == t1.id else 'away_elo', 1500), 1500)
             t2_e = self._safe_float(getattr(t2_l, 'home_elo' if t2_l and t2_l.home_team_id == t2.id else 'away_elo', 1500), 1500)
             
-            # --- ОБНОВЛЕННЫЙ БЛОК H2H В COMPARISON (с лого и ID) ---
             h2h = session.query(Match).filter(
                 or_(
                     and_(Match.home_team_id == t1.id, Match.away_team_id == t2.id), 

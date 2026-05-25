@@ -1,7 +1,7 @@
 {
     "input_size": 44,
-    "hidden_size": 256,
+    "hidden_size": 64,
     "num_layers": 2,
-    "dropout_rate": 0.7,
+    "dropout_rate": 0.5,
     "lr": 0.001
 }

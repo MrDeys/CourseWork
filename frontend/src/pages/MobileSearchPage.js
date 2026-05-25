@@ -15,24 +15,21 @@ function MobileSearchPage() {
         const teamMap = new Map();
 
         data.forEach((m) => {
-          // Обрабатываем каждую команду (домашнюю и гостевую)
           [m.homeTeam, m.awayTeam].forEach((team) => {
             if (!team) return;
 
-            // Используем ID как уникальный ключ в Map, чтобы не было дублей
             if (!teamMap.has(team.id)) {
               teamMap.set(team.id, {
                 id: team.id,
                 name_ru: team.name_ru || "",
                 name_en: team.name || "",
-                displayName: team.name_ru || team.name, // То, что увидит пользователь
+                displayName: team.name_ru || team.name,
                 logo: team.logo_url,
               });
             }
           });
         });
 
-        // Сортируем по алфавиту (по отображаемому имени)
         const sortedTeams = Array.from(teamMap.values()).sort((a, b) =>
           a.displayName.localeCompare(b.displayName),
         );
@@ -47,7 +44,6 @@ function MobileSearchPage() {
     window.scrollTo(0, 0);
   }, []);
 
-  // --- УМНАЯ ФИЛЬТРАЦИЯ (RU + EN) ---
   const filteredTeams = useMemo(() => {
     const query = searchTerm.toLowerCase().trim();
     if (!query) return [];
@@ -58,7 +54,7 @@ function MobileSearchPage() {
           t.name_ru.toLowerCase().includes(query) ||
           t.name_en.toLowerCase().includes(query),
       )
-      .slice(0, 15); // Ограничиваем список для скорости
+      .slice(0, 15);
   }, [searchTerm, allTeams]);
 
   return (
@@ -100,7 +96,6 @@ function MobileSearchPage() {
                 <span className="text-sm font-black uppercase text-gray-200">
                   {team.displayName}
                 </span>
-                {/* Если пользователь ищет на англ, а показываем русское имя, можно добавить подсказку: */}
                 {searchTerm &&
                   team.name_en
                     .toLowerCase()

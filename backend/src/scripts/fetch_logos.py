@@ -12,7 +12,6 @@ HEADERS = {
 
 def get_wikipedia_logo(team_name):
     try:
-        # Добавляем " football club", чтобы поиск был точнее
         search_url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={urllib.parse.quote(team_name + ' football club')}&utf8=&format=json"
         search_res = requests.get(search_url, headers=HEADERS, timeout=5).json()
         
@@ -33,7 +32,6 @@ def get_wikipedia_logo(team_name):
                 if img_url.startswith('//'):
                     img_url = 'https:' + img_url
                 
-                # Получаем оригинальное изображение вместо миниатюры
                 if '/thumb/' in img_url:
                     img_url = img_url.replace('/thumb/', '/')
                     img_url = img_url.rsplit('/', 1)[0]
@@ -47,13 +45,12 @@ def get_wikipedia_logo(team_name):
 def update_team_logos():
     session = SessionLocal()
     
-    # ИСПРАВЛЕНИЕ: Берем только те команды, у которых логотипа ЕЩЕ НЕТ
     teams_to_update = session.query(Team).filter(
         (Team.logo_url == None) | (Team.logo_url == "")
     ).all()
     
     if not teams_to_update:
-        print("✅ Все логотипы уже загружены. Пропускаю...")
+        print("Все логотипы уже загружены. Пропускаю...")
         session.close()
         return
 
@@ -70,13 +67,10 @@ def update_team_logos():
             found += 1
             print(f"[НАЙДЕНО]")
         else:
-            # Не ставим None принудительно, чтобы не затирать, если вдруг ошибка сети
             print("[НЕ НАЙДЕНО]")
             
-        # Небольшая пауза, чтобы Википедия не забанила
         time.sleep(0.5)
 
-        # Сохраняем каждые 10 команд, чтобы не потерять прогресс при сбое
         if found % 10 == 0:
             session.commit()
 

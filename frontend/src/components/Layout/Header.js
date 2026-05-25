@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, NavLink, useSearchParams, useNavigate } from "react-router-dom";
 import { getMatches } from "../../api";
 
-// Логотипы лиг
 import plLogo from "../../assets/leagues/premier-league.png";
 import blLogo from "../../assets/leagues/bundesliga.png";
 import saLogo from "../../assets/leagues/serie-a.png";
@@ -102,33 +101,24 @@ function Header() {
     <header className="hidden md:block bg-gray-950 border-b border-gray-900 sticky top-0 z-[100] w-full shadow-2xl">
       <header className="bg-gray-950 border-b border-gray-900 sticky top-0 z-[100] w-full shadow-2xl">
         <div className="container mx-auto px-4 h-20 lg:h-24 flex items-center justify-between gap-2 lg:gap-4">
-          {/* ЛОГОТИП: Сокращаем на мобилках до NP */}
-          {/* ЛОГОТИП: Красно-желтый градиент (NP / NeuroPredict) */}
           <Link to="/" className="flex-shrink-0 group">
             <span className="text-2xl md:text-3xl font-black tracking-tighter uppercase italic flex items-center">
-              {/* --- ВЕРСИЯ ДЛЯ ТЕЛЕФОНА (NP) --- */}
               <span className="md:hidden flex items-center">
-                {/* N с градиентом от желтого к красному */}
                 <span className="bg-gradient-to-b from-yellow-400 to-red-600 bg-clip-text text-transparent">
                   N
                 </span>
-                {/* P ярко-красная */}
                 <span className="text-red-600">P</span>
               </span>
 
-              {/* --- ВЕРСИЯ ДЛЯ ПК (NeuroPredict) --- */}
               <span className="hidden md:flex items-center transition-transform group-hover:scale-105">
-                {/* Neuro: сочный градиент от желтого к красному */}
                 <span className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-600 bg-clip-text text-transparent">
                   Neuro
                 </span>
-                {/* Predict: классический красный */}
                 <span className="text-red-600 ml-px">Predict</span>
               </span>
             </span>
           </Link>
 
-          {/* ПОИСК: Более гибкий под размер экрана */}
           <div
             className="flex-grow max-w-[150px] xs:max-w-xs md:max-w-md relative"
             ref={searchRef}
@@ -170,7 +160,6 @@ function Header() {
               </button>
             </form>
 
-            {/* Подсказки поиска (адаптированные) */}
             {isSuggestionsOpen && suggestions.length > 0 && (
               <ul className="absolute top-full left-0 right-0 mt-2 bg-gray-950 border border-gray-800 rounded-2xl shadow-2xl overflow-hidden z-50">
                 {suggestions.map((team, index) => (
@@ -194,9 +183,7 @@ function Header() {
             )}
           </div>
 
-          {/* КНОПКИ ДЕЙСТВИЙ */}
           <div className="flex items-center gap-1.5 lg:gap-3" ref={dropdownRef}>
-            {/* Сравнение: Иконка на мобильном, текст на десктопе */}
             <Link
               to="/compare"
               className="flex items-center justify-center p-2.5 lg:px-4 lg:py-2.5 bg-gray-900 border border-gray-800 rounded-xl hover:border-red-600 transition-all group shadow-lg"
@@ -220,7 +207,6 @@ function Header() {
               </span>
             </Link>
 
-            {/* Выбор Лиги */}
             <div className="relative">
               <button
                 onClick={() => setIsLeagueOpen(!isLeagueOpen)}
@@ -230,7 +216,6 @@ function Header() {
                     : "bg-gray-900 border-gray-800 text-gray-300"
                 }`}
               >
-                {/* Показываем логотип активной лиги на мобилке вместо текста */}
                 {activeLeague.logo ? (
                   <img
                     src={activeLeague.logo}
@@ -258,7 +243,6 @@ function Header() {
                 </svg>
               </button>
 
-              {/* Выпадающий список (теперь закрывается при клике) */}
               {isLeagueOpen && (
                 <div className="absolute top-full right-0 mt-3 w-[240px] lg:w-[280px] bg-gray-950 border border-gray-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
                   <div className="flex flex-col p-1.5 space-y-1">
@@ -270,7 +254,7 @@ function Header() {
                         <NavLink
                           key={league.code || "all"}
                           to={league.code ? `/?league=${league.code}` : "/"}
-                          onClick={() => setIsLeagueOpen(false)} // ЗАКРЫТИЕ ПРИ ВЫБОРЕ
+                          onClick={() => setIsLeagueOpen(false)}
                           className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${
                             isActive
                               ? "bg-red-600 text-white"

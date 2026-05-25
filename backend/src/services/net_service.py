@@ -6,28 +6,18 @@ import json
 import numpy as np
 import pandas as pd
 
-# --- ГЛОБАЛЬНОЕ ИСПРАВЛЕНИЕ ПУТЕЙ ---
-# 1. Определяем путь к папке src/services
 current_dir = os.path.dirname(os.path.abspath(__file__)) 
-
-# 2. Определяем путь к папке research (где лежат mlp_net.py и data_utils.py)
-# Путь: src/services -> .. -> models/research
 research_path = os.path.abspath(os.path.join(current_dir, '..', 'models', 'research'))
-
-# 3. Определяем путь к папке saved (где лежат .pth и .pkl файлы)
-# Путь: src/services -> .. -> models/saved
 saved_models_path = os.path.abspath(os.path.join(current_dir, '..', 'models', 'saved'))
 
-# Добавляем папку research в пути поиска модулей, чтобы mlp_net увидел data_utils
 if research_path not in sys.path:
     sys.path.insert(0, research_path)
 
-# Импортируем модель
 try:
     from mlp_net import MultiTaskFootballNet
-    print("✅ Модуль mlp_net и зависимости (data_utils) успешно загружены")
+    print("Модуль mlp_net и зависимости (data_utils) успешно загружены")
 except ImportError as e:
-    print(f"❌ Ошибка импорта модели: {e}")
+    print(f"Ошибка импорта модели: {e}")
 
 class InferenceService:
     def __init__(self):
@@ -37,7 +27,6 @@ class InferenceService:
         self._load_model()
 
     def _load_model(self):
-        """Загрузка весов и скейлера из папки src/models/saved"""
         try:
             config_path = os.path.join(saved_models_path, 'config_mlp.json')
             scaler_path = os.path.join(saved_models_path, 'shared_scaler.pkl')
@@ -59,15 +48,14 @@ class InferenceService:
             )
             self.model.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
             self.model.eval()
-            print(f"✅ Модель MLP успешно инициализирована")
+            print(f"Модель MLP успешно инициализирована")
         except Exception as e:
-            print(f"❌ Ошибка инициализации InferenceService: {e}")
+            print(f"Ошибка инициализации InferenceService: {e}")
 
     def predict(self, t1_stats, t2_stats, t1_elo, t2_elo):
         if self.model is None or self.scaler is None:
             return None
 
-        # Подготовка данных (как при обучении)
         input_data = {
             'home_elo': t1_elo, 'away_elo': t2_elo, 'elo_diff': t1_elo - t2_elo,
             'h_avg_xg_for_last_5': t1_stats['xg_for'], 'h_avg_xg_against_last_5': t1_stats['xg_against'],
@@ -100,7 +88,6 @@ class InferenceService:
             hg = 0 if raw_hg < 0.9 else round(raw_hg)
             ag = 0 if raw_ag < 0.9 else round(raw_ag)   
             
-            # Коррекция счета
             if outcomes[idx] == 'Win Home' and hg <= ag: hg = ag + 1
             elif outcomes[idx] == 'Win Away' and ag <= hg: ag = hg + 1
             elif outcomes[idx] == 'Draw': hg = ag = round((hg + ag) / 2)

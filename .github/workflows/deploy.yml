@@ -26,7 +26,6 @@ jobs:
         run: |
           cd frontend
           npm install
-          # ИСПРАВЛЕНИЕ: Даем права на запуск craco
           chmod +x node_modules/.bin/craco
           CI=false npm run build
 

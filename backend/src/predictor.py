@@ -8,16 +8,12 @@ import pandas as pd
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import or_
 
-# --- НАСТРОЙКА ПУТЕЙ ---
-# Путь к папке src
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Путь к корню backend
 ROOT_DIR = os.path.abspath(os.path.join(BASE_DIR, '..'))
 
 if ROOT_DIR not in sys.path:
     sys.path.insert(0, ROOT_DIR)
 
-# Добавляем путь к research, чтобы импортировать архитектуру сети
 RESEARCH_PATH = os.path.join(BASE_DIR, 'models', 'research')
 if RESEARCH_PATH not in sys.path:
     sys.path.append(RESEARCH_PATH)
@@ -30,34 +26,29 @@ except ImportError:
 
 class PredictionGenerator:
     def __init__(self, model_id='mlp'):
-        print(f"🤖 Инициализация PredictionGenerator [{model_id}]...")
+        print(f"Инициализация PredictionGenerator [{model_id}]...")
         self.model_id = model_id
         
-        # Пути к файлам модели
         self.saved_dir = os.path.join(BASE_DIR, 'models', 'saved')
         config_path = os.path.join(self.saved_dir, f'config_{model_id}.json')
         scaler_path = os.path.join(self.saved_dir, 'shared_scaler.pkl')
         weights_path = os.path.join(self.saved_dir, f'best_{model_id}_model.pth')
 
-        # 1. Загрузка конфига
         with open(config_path, 'r') as f:
             self.cfg = json.load(f)
 
-        # 2. Загрузка скейлера
         self.scaler = joblib.load(scaler_path)
         self.feature_names = self.scaler.feature_names_in_.tolist()
 
-        # 3. Загрузка нейросети
         self.model = MultiTaskFootballNet(
             input_size=self.cfg['input_size'], 
             hidden_size=self.cfg['hidden_size']
         )
         self.model.load_state_dict(torch.load(weights_path, map_location=torch.device('cpu')))
         self.model.eval()
-        print("✅ Нейросеть и скейлер успешно загружены.")
+        print("Нейросеть и скейлер успешно загружены.")
 
     def get_team_stats(self, session, team_id, date):
-        """Собирает среднюю статистику команды за последние 5 матчей"""
         past = session.query(Match).filter(
             or_(Match.home_team_id == team_id, Match.away_team_id == team_id),
             Match.status == 'FINISHED',
@@ -65,7 +56,6 @@ class PredictionGenerator:
         ).order_by(Match.date.desc()).limit(5).all()
 
         if not past:
-            # Значения по умолчанию, если истории нет
             return {k: 1.0 for k in ['xg_for', 'xg_against', 'ppda', 'deep', 'gf', 'ga', 'pts']} | {'rest': 7}
 
         stats = {'xg_f': [], 'xg_a': [], 'ppda': [], 'deep': [], 'gf': [], 'ga': [], 'pts': []}
@@ -88,7 +78,6 @@ class PredictionGenerator:
         }
 
     def prepare_features(self, session, match):
-        """Формирует финальный вектор признаков для модели"""
         h_st = self.get_team_stats(session, match.home_team_id, match.date)
         a_st = self.get_team_stats(session, match.away_team_id, match.date)
         
@@ -113,7 +102,6 @@ class PredictionGenerator:
         for col, val in data.items():
             if col in df.columns: df.at[0, col] = float(val)
         
-        # One-Hot Encoding (Месяц и Лига)
         l_col, m_col = f"league_id_{match.league_id}", f"month_{match.date.month}"
         if l_col in df.columns: df.at[0, l_col] = 1.0
         if m_col in df.columns: df.at[0, m_col] = 1.0
@@ -124,28 +112,22 @@ class PredictionGenerator:
         session = SessionLocal()
         current_version = "MLP_v1_MTL"
         
-        # --- НАСТРОЙКА ОКНА ВРЕМЕНИ ---
         now = datetime.now(timezone.utc).replace(tzinfo=None)
-        # Начинаем с 10 дней назад, чтобы создать архив для сравнения
         start_date = now - timedelta(days=10)
-        # Заканчиваем через 30 дней
         end_date = now + timedelta(days=30)
 
-        # Берем ВСЕ матчи в этом диапазоне (и FINISHED, и SCHEDULED)
         target_matches = session.query(Match).filter(
             Match.date >= start_date,
             Match.date <= end_date
         ).all()
         
-        print(f"📊 Обработка прогнозов для {len(target_matches)} матчей (окно: {start_date.date()} - {end_date.date()})")
+        print(f"Обработка прогнозов для {len(target_matches)} матчей (окно: {start_date.date()} - {end_date.date()})")
         
         updated_count = 0
         created_count = 0
 
         for m in target_matches:
             try:
-                # ВАЖНО: prepare_features использует m.date, поэтому для старых матчей 
-                # он возьмет статистику, которая была актуальна ДО того дня.
                 X_df = self.prepare_features(session, m)
                 X_scaled = self.scaler.transform(X_df)
                 X_tensor = torch.tensor(X_scaled, dtype=torch.float32)
@@ -171,14 +153,12 @@ class PredictionGenerator:
                         if outcome_str == 'Win Home': hg = 1
                         else: ag = 1
 
-                # Ищем существующий прогноз
                 pred = session.query(Prediction).filter(
                     Prediction.match_id == m.id, 
                     Prediction.model_version == current_version
                 ).first()
 
                 if pred:
-                    # Обновляем старый (статистика команд могла измениться)
                     pred.prob_a = float(probs[0])
                     pred.prob_d = float(probs[1])
                     pred.prob_h = float(probs[2])
@@ -188,7 +168,6 @@ class PredictionGenerator:
                     pred.created_at = datetime.now(timezone.utc)
                     updated_count += 1
                 else:
-                    # Создаем новый для архива или будущего
                     pred = Prediction(
                         match_id=m.id, 
                         model_version=current_version,
@@ -204,11 +183,11 @@ class PredictionGenerator:
                 session.commit()
 
             except Exception as e:
-                print(f"❌ Ошибка в матче {m.id}: {e}")
+                print(f"Ошибка в матче {m.id}: {e}")
                 session.rollback()
 
         session.close()
-        print(f"🚀 Готово! Обновлено: {updated_count}, Создано для архива/будущего: {created_count}.")
+        print(f"Готово! Обновлено: {updated_count}, Создано для архива/будущего: {created_count}.")
 
 if __name__ == "__main__":
     gen = PredictionGenerator()

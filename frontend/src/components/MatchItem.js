@@ -28,7 +28,6 @@ const getOutcomeStyle = (outcome) => {
 };
 
 function MatchItem({ match }) {
-  // --- ЗАЩИТА ОТ КРАША ---
   if (!match || !match.homeTeam || !match.awayTeam) {
     return null;
   }
